@@ -1510,10 +1510,10 @@ export default function Home() {
             <h2 className="text-2xl font-bold text-[#81515a] mb-6">Daily Leaders 🏆</h2>
 
             {/* Toggle Button Group */}
-            <div className="flex bg-[#fff8f7] p-1.5 rounded-2xl border-2 border-white mb-6 shadow-[inset_0_4px_8px_rgba(0,0,0,0.03)]">
+            <div className="flex bg-[#fff8f7] p-1.5 rounded-xl border-2 border-white mb-6 shadow-[inset_0_4px_8px_rgba(0,0,0,0.03)]">
               <button
                 onClick={() => setLeaderboardTab("daily")}
-                className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-200 ${
+                className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${
                   leaderboardTab === "daily"
                     ? "bg-[#81515a] text-white shadow-md"
                     : "text-[#81515a]/75 hover:bg-[#81515a]/5"
@@ -1523,7 +1523,7 @@ export default function Home() {
               </button>
               <button
                 onClick={() => setLeaderboardTab("all")}
-                className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-200 ${
+                className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${
                   leaderboardTab === "all"
                     ? "bg-[#81515a] text-white shadow-md"
                     : "text-[#81515a]/75 hover:bg-[#81515a]/5"
