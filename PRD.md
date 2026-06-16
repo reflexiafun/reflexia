@@ -1,136 +1,136 @@
-Berikut PRD untuk **Reflexia** dengan tema **cute pastel / Web3 casual**. Aku bikin fokus ke desain game, UX, dan reward loop supaya langsung bisa kamu pakai buat build. [uxplanet](https://uxplanet.org/mobile-game-design-5-impressive-examples-for-ui-designers-3239e6d88a8a)
+Here is the PRD for **Reflexia** with a **cute pastel / Web3 casual** theme. I focused on game design, UX, and the reward loop so you can use it directly to build the game. [uxplanet](https://uxplanet.org/mobile-game-design-5-impressive-examples-for-ui-designers-3239e6d88a8a)
 
-## 1. Ringkasan Produk
+## 1. Product Summary
 
-Reflexia adalah mini game refleks cepat yang menantang pemain untuk men-tap target lucu secepat mungkin sebelum target hilang atau berubah. Tema visualnya dibuat **cute pastel**: penuh warna cerah lembut, karakter imut, animasi lembut, dan UI yang terasa aman untuk semua casual player. Game ini cocok untuk sesi main singkat 10–30 detik per ronde, lalu pemain bisa dapat poin, item, atau reward kecil berbasis performa. [youtube](https://www.youtube.com/watch?v=Bt6cdA1w_no)
+Reflexia is a fast-paced reflex mini-game that challenges players to tap cute targets as quickly as possible before they disappear or change. The visual theme is designed to be **cute pastel**: filled with soft bright colors, cute characters, gentle animations, and a UI that feels safe and welcoming for all casual players. The game is suitable for short play sessions of 10–30 seconds per round, after which players can earn points, items, or small performance-based rewards. [youtube](https://www.youtube.com/watch?v=Bt6cdA1w_no)
 
-## 2. Tujuan Produk
+## 2. Product Objectives
 
-Tujuan utama game ini adalah menciptakan pengalaman refleks yang sederhana, seru, dan mudah diulang tanpa terasa berat. Dari sisi produk, game harus punya retention loop yang jelas: main cepat, dapat skor, naik level, buka skin, lalu ulang lagi. Sistem reward harus balanced supaya hadiah terasa menarik tapi tetap aman dari abuse. [gamedeveloper](https://www.gamedeveloper.com/design/game-design-theory-applied-a-layered-rewards-system)
+The main goal of this game is to create a simple, fun, and highly replayable reflex experience without feeling heavy or overwhelming. From a product perspective, the game must have a clear retention loop: play quickly, get a score, level up, unlock skins, and repeat. The reward system must be balanced so that prizes feel attractive but remain secure against abuse. [gamedeveloper](https://www.gamedeveloper.com/design/game-design-theory-applied-a-layered-rewards-system)
 
-## 3. Target Pengguna
+## 3. Target Users
 
-Target utama adalah pemain casual mobile berusia remaja hingga dewasa muda yang suka game simple, warna cerah, dan reward instan. Karena temanya cute pastel / Web3 casual, UI harus ramah, tidak agresif, dan mudah dipahami dalam 5 detik pertama. Game juga cocok untuk pengguna yang suka mini challenge harian dan leaderboard ringan. [canva](https://www.canva.com/templates/s/game/)
+The primary target audience is casual mobile players ranging from teenagers to young adults who enjoy simple games, bright colors, and instant rewards. Because of the cute pastel / Web3 casual theme, the UI must be friendly, non-aggressive, and easy to understand within the first 5 seconds. The game is also suitable for users who enjoy daily mini-challenges and light leaderboards. [canva](https://www.canva.com/templates/s/game/)
 
 ## 4. Core Gameplay
 
-Gameplay inti:
-1. Pemain menekan tombol start.
-2. Target lucu muncul acak di layar.
-3. Pemain harus tap target sebelum waktu habis.
-4. Skor dihitung dari kecepatan, akurasi, dan streak.
-5. Jika skor minimum tercapai, pemain dapat reward atau poin. [play.google](https://play.google.com/store/apps/details?id=com.aloneaarrow.reflexpush&hl=id)
+Core Gameplay:
+1. The player presses the start button.
+2. Cute targets appear randomly on the screen.
+3. The player must tap the target before the time runs out.
+4. The score is calculated based on speed, accuracy, and streak.
+5. If the minimum score is reached, the player receives a reward or points. [play.google](https://play.google.com/store/apps/details?id=com.aloneaarrow.reflexpush&hl=id)
 
-Contoh variasi target:
-- Bintang kecil yang tersenyum.
-- Awan warna-warni.
-- Anak ayam, kelinci, atau permen.
-- Balon yang muncul dan menghilang cepat.
-- Target palsu yang harus dihindari untuk menambah tantangan. [play.google](https://play.google.com/store/apps/details?id=com.HSGaming.Reflection&hl=hi)
+Examples of target variations:
+- A small smiling star.
+- Colorful clouds.
+- A chick, bunny, or candy.
+- A balloon that appears and disappears quickly.
+- Fake targets that must be avoided to add a challenge. [play.google](https://play.google.com/store/apps/details?id=com.HSGaming.Reflection&hl=hi)
 
 ## 5. Visual Direction
 
-Arah visualnya harus ceria, lembut, dan mudah dibaca. Gunakan palet pastel seperti pink muda, biru langit, kuning lembut, dan mint, dengan kontras yang tetap cukup untuk tombol utama. Bentuk elemen dibuat membulat, bayangan halus, dan animasi bounce kecil agar terasa playful. [dribbble](https://dribbble.com/search/game-ui-children)
+The visual direction should be cheerful, soft, and easy to read. Use a pastel palette such as light pink, sky blue, soft yellow, and mint, with sufficient contrast for main buttons. Element shapes should be rounded with soft shadows and small bounce animations to keep it playful. [dribbble](https://dribbble.com/search/game-ui-children)
 
 Style guidelines:
-- Gunakan karakter mascot imut sebagai pemandu.
-- Hindari warna terlalu gelap atau neon.
-- Pakai icon besar dan teks pendek.
-- Semua tombol utama harus punya affordance jelas.
-- Animasi harus lembut, tidak terlalu cepat atau tajam. [uxplanet](https://uxplanet.org/mobile-game-design-5-impressive-examples-for-ui-designers-3239e6d88a8a)
+- Use a cute mascot character as a guide.
+- Avoid colors that are too dark or neon.
+- Use large icons and short text.
+- All main buttons must have clear affordance.
+- Animations must be smooth, not too fast or sharp. [uxplanet](https://uxplanet.org/mobile-game-design-5-impressive-examples-for-ui-designers-3239e6d88a8a)
 
 ## 6. Screen List
 
-Screen utama yang dibutuhkan:
+Main screens needed:
 - Splash / loading.
 - Home menu.
-- Tutorial singkat.
+- Short tutorial.
 - Game screen.
 - Result screen.
 - Reward / claim screen.
 - Shop / cosmetics.
-- Leaderboard harian.
+- Daily leaderboard.
 - Profile / stats. [dev](https://dev.to/ryanvanbelkum/building-a-mobile-game-using-react-native-3320)
 
 ## 7. UI Components
 
-Komponen UI utama:
-- Primary button besar dengan sudut bulat.
-- Progress bar lucu untuk timer.
-- Target card dengan animasi pop.
-- Score bubble untuk poin realtime.
-- Streak badge.
-- Reward modal.
-- Mini mascot avatar.
-- Daily challenge card. [dribbble](https://dribbble.com/search/game-ui-children)
+Core UI Components:
+- Large primary buttons with rounded corners.
+- Cute progress bar for the timer.
+- Target cards with pop animations.
+- Score bubbles for real-time points.
+- Streak badges.
+- Reward modals.
+- Mini mascot avatars.
+- Daily challenge cards. [dribbble](https://dribbble.com/search/game-ui-children)
 
-Prinsip desain:
-- Satu layar harus fokus ke satu aksi utama.
-- Jangan banyak teks.
-- Gunakan hierarchy yang jelas: target, timer, score, lalu reward.
-- Feedback harus langsung terlihat setelah tap benar atau salah. [gamedeveloper](https://www.gamedeveloper.com/design/game-design-theory-applied-a-layered-rewards-system)
+Design principles:
+- Each screen must focus on a single primary action.
+- Minimize text.
+- Use a clear hierarchy: target, timer, score, then reward.
+- Feedback must be immediately visible after a correct or incorrect tap. [gamedeveloper](https://www.gamedeveloper.com/design/game-design-theory-applied-a-layered-rewards-system)
 
 ## 8. Reward Design
 
-Reward system sebaiknya bertingkat:
-- Main normal = poin.
-- Capai skor tertentu = bonus poin.
-- Streak harian = chest reward.
-- Weekly leaderboard = reward tambahan.
-- Claim USDm hanya untuk milestone tertentu, bukan tiap ronde. [adiccionesconductuales.som360](https://adiccionesconductuales.som360.org/en/articulo/role-video-game-design-addiction)
+The reward system should be tiered:
+- Normal play = points.
+- Reaching specific scores = bonus points.
+- Daily streaks = chest rewards.
+- Weekly leaderboard = additional rewards.
+- USDm claims only for specific milestones, not for every round. [adiccionesconductuales.som360](https://adiccionesconductuales.som360.org/en/articulo/role-video-game-design-addiction)
 
-Contoh:
-- Skor 0–4: tidak ada reward.
-- Skor 5–7: kecil sekali, masuk poin.
-- Skor 8–10: eligible claim kecil.
+Examples:
+- Score 0–4: no reward.
+- Score 5–7: very small, points only.
+- Score 8–10: eligible for small claim.
 - 5 win streak: bonus chest.
 - 7-day login: cosmetic unlock. [gamedeveloper](https://www.gamedeveloper.com/design/game-design-theory-applied-a-layered-rewards-system)
 
 ## 9. MVP Scope
 
-MVP yang paling realistis:
-- 1 mode game refleks.
+Most realistic MVP scope:
+- 1 reflex game mode.
 - 1 mascot.
-- 1 papan skor.
-- 1 reward loop harian.
-- 1 shop cosmetic sederhana.
-- 1 leaderboard ringan. [dev](https://dev.to/ryanvanbelkum/building-a-mobile-game-using-react-native-3320)
+- 1 scoreboard.
+- 1 daily reward loop.
+- 1 simple cosmetic shop.
+- 1 light leaderboard. [dev](https://dev.to/ryanvanbelkum/building-a-mobile-game-using-react-native-3320)
 
-Yang belum perlu di MVP:
-- Banyak mode.
-- Banyak karakter.
-- Marketplace kompleks.
-- Animasi 3D.
-- Economy yang terlalu besar. [gamedeveloper](https://www.gamedeveloper.com/design/game-design-theory-applied-a-layered-rewards-system)
+Not needed for MVP:
+- Multiple modes.
+- Multiple characters.
+- Complex marketplace.
+- 3D animations.
+- Overly large economy. [gamedeveloper](https://www.gamedeveloper.com/design/game-design-theory-applied-a-layered-rewards-system)
 
 ## 10. Acceptance Criteria
 
-Game dianggap siap MVP kalau:
-- User bisa paham cara main dalam kurang dari 10 detik.
-- 1 ronde selesai dalam 10–30 detik.
-- UI tetap nyaman di mobile.
-- Reward terasa menarik tapi tidak mudah dieksploitasi.
-- Tema cute pastel / Web3 casual konsisten di semua screen. [uxplanet](https://uxplanet.org/mobile-game-design-5-impressive-examples-for-ui-designers-3239e6d88a8a)
+The game is considered MVP-ready if:
+- Users can understand how to play in less than 10 seconds.
+- 1 round finishes in 10–30 seconds.
+- The UI remains comfortable on mobile.
+- Rewards feel attractive but are not easy to exploit.
+- The cute pastel / Web3 casual theme is consistent across all screens. [uxplanet](https://uxplanet.org/mobile-game-design-5-impressive-examples-for-ui-designers-3239e6d88a8a)
 
-## 11. Contoh Arah Copy
+## 11. Example Copy Directions
 
-Contoh tone copy:
+Example copy tone:
 - “Tap the cute star!”
 - “Beat your reflex!”
 - “You got 8 points, nice!”
 - “Come back tomorrow for a bonus!”
 - “Unlock a new baby sticker!”  
 
-124: ## 12. Integrasi Web3 & MiniPay (Celo Rails)
-125: 
-126: Game dirancang dengan spesifikasi Web3 sebagai berikut:
-127: - **Celo Stablecoin Rails**: Seluruh reward on-chain menggunakan USDm sebagai stablecoin utama di jaringan Celo.
-128: - **UX Copy**: Pemain melihat reward sebagai "Dollar (USDm)" dengan catatan yang menjelaskan bahwa balance tersebut dapat di-swap ke USDT atau USDC via MiniPay Pockets.
-129: - **Smart Contract Flow**: Reward pool berisi USDm, fungsi `claimReward` mengirim USDm ke alamat Celo/MiniPay milik user, dan MiniPay mengurus swap ke USDT/USDC jika diinginkan oleh user.
-130: - **DeFi Disclaimer**: Tidak menggunakan mekanisme "staking", "yield", atau DeFi kompleks lainnya untuk menjaga kestabilan sirkulasi reward dan mencegah eksploitasi (sybil/abuse).
-131: 
-132: ## 13. Pitch ke Proof of Ship (USDm Wording)
-133: 
-134: > **Reflexia is a fast-paced casual game built specifically for MiniPay on Celo stablecoin rails, delivering instant micro-rewards in USDm directly to players' Celo wallets. By focusing on pure gameplay and high-retention tapping challenges, it offers a secure and abuse-resistant rewards loop free from complex DeFi mechanisms. Winners can seamlessly swap their USDm rewards to USDT or USDC via MiniPay Pockets, providing a friction-free Web3 user experience tailored for casual mobile audiences.**
-135: 
-136: *(Note: Hackathon prize pool dari Proof of Ship tetap dibayar dalam USDT ke developer).*
+## 12. Web3 & MiniPay Integration (Celo Rails)
+
+The game is designed with the following Web3 specifications:
+- **Celo Stablecoin Rails**: All on-chain rewards use USDm as the primary stablecoin on the Celo network.
+- **UX Copy**: Players see rewards as "Dollars (USDm)" with a note explaining that the balance can be swapped to USDT or USDC via MiniPay Pockets.
+- **Smart Contract Flow**: The reward pool contains USDm, the `claimReward` function sends USDm to the user's Celo/MiniPay address, and MiniPay handles the swap to USDT/USDC if desired by the user.
+- **DeFi Disclaimer**: No staking, yield, or complex DeFi mechanisms are used, to maintain reward pool stability and prevent exploitation (sybil/abuse).
+
+## 13. Pitch to Proof of Ship (USDm Wording)
+
+> **Reflexia is a fast-paced casual game built specifically for MiniPay on Celo stablecoin rails, delivering instant micro-rewards in USDm directly to players' Celo wallets. By focusing on pure gameplay and high-retention tapping challenges, it offers a secure and abuse-resistant rewards loop free from complex DeFi mechanisms. Winners can seamlessly swap their USDm rewards to USDT or USDC via MiniPay Pockets, providing a friction-free Web3 user experience tailored for casual mobile audiences.**
+
+*(Note: Hackathon prize pool from Proof of Ship is still paid in USDT to the developer).*
