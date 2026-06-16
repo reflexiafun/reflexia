@@ -12,6 +12,10 @@ You are tasked with building the frontend for **Reflexia**, a cute, fast-paced r
 - **Core Technology**: Single-page interactive application built using HTML5, CSS3, and modern ES6 JavaScript.
 - **Framework Option**: Vanilla JS or Tailwind CSS (via CDN if standalone HTML). Use beautiful CSS transitions, keyframe animations, and custom utility classes.
 - **Responsiveness**: Mobile-first design, optimized for portrait aspect ratio (9:16) but fully centered and responsive on desktop displays with a charming device frame or cloud-themed background.
+- **Web3 / MiniPay Integration**: 
+  - Built for MiniPay on Celo stablecoin rails.
+  - Micro-rewards in USDm directly to MiniPay (Celo address).
+  - Users can swap their USDm to USDT/USDC using MiniPay Pockets.
 - **Persistence**: Save player progress (XP, Points, Unlocked Skins, Daily Logins, High Score) in `localStorage`.
 
 ---
@@ -95,7 +99,7 @@ Use these design rules strictly to ensure a premium, unified aesthetic:
 *   **Components**:
     *   **Star Rating**: 1, 2, or 3 cute cartoon stars lighting up one by one depending on performance.
     *   **Stats Card**: Displays Final Score, Accuracy, Max Streak, and Earned Points.
-    *   **USDT Milestone / Lucky Draw Button**: If they score >= 8 targets, show a glowing *"Claim Reward Chest!"* button.
+    *   **USDm Milestone / Lucky Draw Button**: If they score >= 8 targets, show a glowing *"Claim Reward Chest!"* button.
     *   **Navigation**:
         *   "Play Again" (Primary action).
         *   "Back to Home".
@@ -141,7 +145,7 @@ To help you build the core JavaScript game loop:
     *   Score 0–4: No chest reward.
     *   Score 5–7: Tiny chest (+10 pts).
     *   Score 8–10: Medium chest (+30 pts + chance of skin voucher).
-    *   Score > 10: Golden chest (Eligible for special sticker reward / USDT Claim simulation).
+    *   Score > 10: Golden chest (Eligible for special sticker reward / USDm Claim simulation).
 5.  **State Management**:
     *   `gameState`: `SPLASH` | `HOME` | `TUTORIAL` | `PLAYING` | `PAUSED` | `RESULT` | `SHOP` | `LEADERBOARD`.
     *   Use dynamic class swapping or hidden attributes (`display: none`) to manage transitions smoothly without page reloads.

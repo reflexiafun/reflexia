@@ -77,7 +77,7 @@ Reward system sebaiknya bertingkat:
 - Capai skor tertentu = bonus poin.
 - Streak harian = chest reward.
 - Weekly leaderboard = reward tambahan.
-- Claim USDT hanya untuk milestone tertentu, bukan tiap ronde. [adiccionesconductuales.som360](https://adiccionesconductuales.som360.org/en/articulo/role-video-game-design-addiction)
+- Claim USDm hanya untuk milestone tertentu, bukan tiap ronde. [adiccionesconductuales.som360](https://adiccionesconductuales.som360.org/en/articulo/role-video-game-design-addiction)
 
 Contoh:
 - Skor 0–4: tidak ada reward.
@@ -121,7 +121,16 @@ Contoh tone copy:
 - “Come back tomorrow for a bonus!”
 - “Unlock a new baby sticker!”  
 
-Kalau kamu mau, langkah berikutnya aku bisa bikin:
-1. **PRD versi lebih formal**, atau  
-2. **UI spec per screen**, atau  
-3. **prompt desain visual untuk Figma / AI image generator**.
+124: ## 12. Integrasi Web3 & MiniPay (Celo Rails)
+125: 
+126: Game dirancang dengan spesifikasi Web3 sebagai berikut:
+127: - **Celo Stablecoin Rails**: Seluruh reward on-chain menggunakan USDm sebagai stablecoin utama di jaringan Celo.
+128: - **UX Copy**: Pemain melihat reward sebagai "Dollar (USDm)" dengan catatan yang menjelaskan bahwa balance tersebut dapat di-swap ke USDT atau USDC via MiniPay Pockets.
+129: - **Smart Contract Flow**: Reward pool berisi USDm, fungsi `claimReward` mengirim USDm ke alamat Celo/MiniPay milik user, dan MiniPay mengurus swap ke USDT/USDC jika diinginkan oleh user.
+130: - **DeFi Disclaimer**: Tidak menggunakan mekanisme "staking", "yield", atau DeFi kompleks lainnya untuk menjaga kestabilan sirkulasi reward dan mencegah eksploitasi (sybil/abuse).
+131: 
+132: ## 13. Pitch ke Proof of Ship (USDm Wording)
+133: 
+134: > **Reflexia is a fast-paced casual game built specifically for MiniPay on Celo stablecoin rails, delivering instant micro-rewards in USDm directly to players' Celo wallets. By focusing on pure gameplay and high-retention tapping challenges, it offers a secure and abuse-resistant rewards loop free from complex DeFi mechanisms. Winners can seamlessly swap their USDm rewards to USDT or USDC via MiniPay Pockets, providing a friction-free Web3 user experience tailored for casual mobile audiences.**
+135: 
+136: *(Note: Hackathon prize pool dari Proof of Ship tetap dibayar dalam USDT ke developer).*

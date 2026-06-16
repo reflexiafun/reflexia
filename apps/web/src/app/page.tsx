@@ -105,7 +105,7 @@ const COOL_SENTENCES = [
   "Don't tap the wrong target! ❌",
   "Test your limits today! ⏱️",
   "Super speed mode activated! ⚡",
-  "Godlike reflexes or snail mode? 🐌",
+  "Maximum reflexes or snail mode? 🐌",
   "Tap like a true champion! 🏆",
   "Maximum concentration needed! 🧠",
   "Get ready for finger gymnastics! 😂",
@@ -351,7 +351,7 @@ export default function Home() {
   };
 
   // Mock blockchain reward claim
-  const handleClaimUSDT = () => {
+  const handleClaimUSDm = () => {
     if (score < 8) return;
     playSound("click");
     setClaimStatus("claiming");
@@ -429,7 +429,7 @@ export default function Home() {
                 <span className="font-bold text-lg text-[#81515a]">{bubbleText}</span>
                 <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-4 bg-white bubble-tail"></div>
               </div>
-              <div 
+              <div
                 onClick={randomizeMascot}
                 className="w-48 h-48 bg-[#ffd9df] rounded-full border-4 border-white flex items-center justify-center text-[115px] shadow-[0_20px_40px_rgba(0,0,0,0.06)] animate-wiggle cursor-pointer active:scale-95 transition-transform"
               >
@@ -624,7 +624,7 @@ export default function Home() {
                   onClick={() => changeScreen("reward")}
                   className="w-full py-5 font-bold bg-[#675f2d] hover:bg-[#4f4717] text-white rounded-2xl clay-button-primary animate-bounce"
                 >
-                  🎁 Claim USDT Reward!
+                  🎁 Claim USDm Reward!
                 </Button>
               )}
               <Button
@@ -650,15 +650,18 @@ export default function Home() {
 
             {claimStatus === "idle" && (
               <div className="text-center">
-                <p className="text-[#514345] text-sm mb-6">
+                <p className="text-[#514345] text-sm mb-4">
                   Congratulations! You achieved a score of <strong>{score}</strong>. You are eligible to claim a small reward to your connected Celo Wallet.
                 </p>
-                <div className="bg-[#fcf1f1] p-5 rounded-2xl border-2 border-white mb-6">
+                <div className="bg-[#fcf1f1] p-5 rounded-2xl border-2 border-white mb-4">
                   <p className="text-xs text-[#81515a] font-bold">REWARD AMOUNT</p>
-                  <p className="text-3xl font-bold text-[#81515a] mt-1">0.10 USDT</p>
+                  <p className="text-3xl font-bold text-[#81515a] mt-1">0.10 USDm</p>
                 </div>
+                <p className="text-[11px] text-slate-500 mb-4 italic leading-relaxed">
+                  Note: You can swap your USDm to USDT/USDC using MiniPay Pockets.
+                </p>
                 <Button
-                  onClick={handleClaimUSDT}
+                  onClick={handleClaimUSDm}
                   className="w-full py-5 font-bold bg-[#81515a] hover:bg-[#663a43] text-white rounded-2xl clay-button-primary"
                 >
                   Claim Reward Now! 🎁
@@ -727,10 +730,10 @@ export default function Home() {
                   <div
                     key={theme.id}
                     className={`p-3 rounded-2xl border-2 flex justify-between items-center transition-all ${isSelected
-                        ? "border-[#81515a] bg-[#ffd9df]"
-                        : isUnlocked
-                          ? "border-slate-200 bg-slate-50"
-                          : "border-slate-100 bg-white"
+                      ? "border-[#81515a] bg-[#ffd9df]"
+                      : isUnlocked
+                        ? "border-slate-200 bg-slate-50"
+                        : "border-slate-100 bg-white"
                       }`}
                   >
                     <div className="text-left">
@@ -745,10 +748,10 @@ export default function Home() {
                       disabled={!isUnlocked && stars < theme.price}
                       size="sm"
                       className={`px-3 py-1 text-xs font-bold rounded-xl ${isSelected
-                          ? "bg-[#81515a] text-white cursor-default"
-                          : isUnlocked
-                            ? "bg-slate-200 text-slate-700 hover:bg-slate-300"
-                            : "bg-[#3a6470] text-white hover:bg-[#214c58]"
+                        ? "bg-[#81515a] text-white cursor-default"
+                        : isUnlocked
+                          ? "bg-slate-200 text-slate-700 hover:bg-slate-300"
+                          : "bg-[#3a6470] text-white hover:bg-[#214c58]"
                         }`}
                     >
                       {isSelected ? "Selected" : isUnlocked ? "Select" : `${theme.price} ⭐`}
@@ -777,12 +780,12 @@ export default function Home() {
                 { rank: 1, name: "0x71C5...4382 🐇", score: 28 },
                 { rank: 2, name: "0xE0F7...A918 🐥", score: 25 },
                 { rank: 3, name: "0x3A5d...8C12 ⭐", score: 22 },
-                { 
-                  rank: 4, 
-                  name: mounted && isConnected && address 
-                    ? `${address.slice(0, 8)}...${address.slice(-6)}` 
-                    : "You", 
-                  score: highScore 
+                {
+                  rank: 4,
+                  name: mounted && isConnected && address
+                    ? `${address.slice(0, 8)}...${address.slice(-6)}`
+                    : "You",
+                  score: highScore
                 },
               ]
                 .sort((a, b) => b.score - a.score)
