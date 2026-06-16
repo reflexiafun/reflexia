@@ -4,12 +4,12 @@
   "description": "A new Celo blockchain project",
   "private": true,
   "scripts": {
-    "build": "turbo build",
-    "dev": "turbo dev",
+    "build": "pnpm --filter web build",
+    "dev": "pnpm --filter web dev",
     "start": "pnpm --filter web start",
-    "lint": "turbo lint",
-    "clean": "turbo clean",
-    "type-check": "turbo type-check"
+    "lint": "pnpm --filter web lint",
+    "clean": "pnpm --filter web clean",
+    "type-check": "pnpm --filter web type-check"
   },
   "devDependencies": {
     "@types/node": "^20.8.0",
