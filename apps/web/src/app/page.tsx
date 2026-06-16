@@ -94,6 +94,29 @@ const SKIN_THEMES = [
 
 const MASCOT_EMOJIS = ["🐹", "🐱", "🐶", "🦊", "🦁", "🐯", "🐻", "🐼", "🐨", "🐰", "🦄", "🐸", "🐷", "🐧", "🐥", "🐣", "🐵", "🐨", "🐺", "🐿️"];
 
+const COOL_SENTENCES = [
+  "Ready, set, tap! 🚀",
+  "Show me your lightning-fast reflex! ⚡",
+  "Focus hard, tap faster! 🔥",
+  "Can you go any faster? 😏",
+  "Unleash your tapping skills! 🎮",
+  "Reach for the highest score! 🏆",
+  "Keep your eyes sharp and hands quick! 👀",
+  "Don't tap the wrong target! ❌",
+  "Test your limits today! ⏱️",
+  "Super speed mode activated! ⚡",
+  "Godlike reflexes or snail mode? 🐌",
+  "Tap like a true champion! 🏆",
+  "Maximum concentration needed! 🧠",
+  "Get ready for finger gymnastics! 😂",
+  "Break your own limits! 🚀",
+  "Watch out for the traps! ❌",
+  "Become the ultimate reflex master! 👑",
+  "Don't blink for a single second! 👁️",
+  "Speed is the key to victory! 🔑",
+  "Beat the high score! 🔥"
+];
+
 export default function Home() {
   const { address, isConnected } = useAccount();
   const [activeScreen, setActiveScreen] = useState<ScreenType>("splash");
@@ -105,6 +128,7 @@ export default function Home() {
   const [selectedSkin, setSelectedSkin] = useState<string>("default");
   const [mounted, setMounted] = useState(false);
   const [mascotEmoji, setMascotEmoji] = useState("🐹");
+  const [bubbleText, setBubbleText] = useState("Let's test your reflex! ⚡");
 
   // Game state
   const [score, setScore] = useState(0);
@@ -155,6 +179,8 @@ export default function Home() {
             // Randomize mascot for this session
             const randomMascot = MASCOT_EMOJIS[Math.floor(Math.random() * MASCOT_EMOJIS.length)];
             setMascotEmoji(randomMascot);
+            const randomText = COOL_SENTENCES[Math.floor(Math.random() * COOL_SENTENCES.length)];
+            setBubbleText(randomText);
             setActiveScreen("home");
             return 100;
           }
@@ -176,6 +202,10 @@ export default function Home() {
 
   const changeScreen = (screen: ScreenType) => {
     playSound("click");
+    if (screen === "home") {
+      const randomText = COOL_SENTENCES[Math.floor(Math.random() * COOL_SENTENCES.length)];
+      setBubbleText(randomText);
+    }
     setActiveScreen(screen);
   };
 
@@ -184,6 +214,8 @@ export default function Home() {
     const filtered = MASCOT_EMOJIS.filter((e) => e !== mascotEmoji);
     const randomMascot = filtered[Math.floor(Math.random() * filtered.length)];
     setMascotEmoji(randomMascot);
+    const randomText = COOL_SENTENCES[Math.floor(Math.random() * COOL_SENTENCES.length)];
+    setBubbleText(randomText);
   };
 
   const exitGame = () => {
@@ -193,6 +225,8 @@ export default function Home() {
     gameActiveRef.current = false;
     setGameActive(false);
     setTargets([]);
+    const randomText = COOL_SENTENCES[Math.floor(Math.random() * COOL_SENTENCES.length)];
+    setBubbleText(randomText);
     setActiveScreen("home");
   };
 
@@ -392,7 +426,7 @@ export default function Home() {
             {/* Mascot and speech bubble */}
             <div className="relative mb-8 group w-full flex flex-col items-center">
               <div className="bg-white px-5 py-3 rounded-2xl clay-card whitespace-nowrap animate-bounce mb-6 relative">
-                <span className="font-bold text-lg text-[#81515a]">Let's test your reflex! ⚡</span>
+                <span className="font-bold text-lg text-[#81515a]">{bubbleText}</span>
                 <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-4 bg-white bubble-tail"></div>
               </div>
               <div 
