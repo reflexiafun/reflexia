@@ -354,7 +354,7 @@ export default function Home() {
   const [hasSpawnedAny, setHasSpawnedAny] = useState(false);
   const [splashProgress, setSplashProgress] = useState(0);
   const [flyingIcons, setFlyingIcons] = useState<FlyingIcon[]>([]);
-  const [leaderboardData, setLeaderboardData] = useState<{ daily: any[]; allTime: any[] }>({ daily: [], allTime: [] });
+  const [leaderboardData, setLeaderboardData] = useState<{ daily: any[]; all: any[] }>({ daily: [], all: [] });
   const [leaderboardTab, setLeaderboardTab] = useState<"daily" | "all">("daily");
 
   // Claim state
@@ -1410,70 +1410,72 @@ export default function Home() {
         {/* LEADERBOARD SCREEN */}
         {activeScreen === "leaderboard" && (
           <div className="w-full bg-white p-6 rounded-3xl clay-card">
-            <h2 className="text-2xl font-bold text-[#81515a] mb-4 text-center">Leaderboard 🏆</h2>
+            <h2 className="text-2xl font-bold text-[#81515a] mb-6">Daily Leaders 🏆</h2>
 
-            {/* Button Group / Tabs */}
-            <div className="flex bg-[#fff8f7] p-1.5 rounded-2xl border-2 border-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] mb-6 gap-1">
+            {/* Toggle Button Group */}
+            <div className="flex bg-[#fff8f7] p-1.5 rounded-2xl border-2 border-white mb-6 shadow-[inset_0_4px_8px_rgba(0,0,0,0.03)]">
               <button
-                onClick={() => {
-                  playSound("click");
-                  setLeaderboardTab("daily");
-                }}
-                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+                onClick={() => setLeaderboardTab("daily")}
+                className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-200 ${
                   leaderboardTab === "daily"
-                    ? "bg-[#81515a] text-white shadow-sm scale-105"
-                    : "text-[#81515a] hover:bg-slate-100"
+                    ? "bg-[#81515a] text-white shadow-md"
+                    : "text-[#81515a]/75 hover:bg-[#81515a]/5"
                 }`}
               >
-                Daily Today ⏱️
+                Today's Daily ⏱️
               </button>
               <button
-                onClick={() => {
-                  playSound("click");
-                  setLeaderboardTab("all");
-                }}
-                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+                onClick={() => setLeaderboardTab("all")}
+                className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-200 ${
                   leaderboardTab === "all"
-                    ? "bg-[#81515a] text-white shadow-sm scale-105"
-                    : "text-[#81515a] hover:bg-slate-100"
+                    ? "bg-[#81515a] text-white shadow-md"
+                    : "text-[#81515a]/75 hover:bg-[#81515a]/5"
                 }`}
               >
-                All-Time 🔥
+                All-Time 👑
               </button>
             </div>
 
-            <div className="flex flex-col gap-2.5 mb-6 max-h-[260px] overflow-y-auto pr-1">
-              {(() => {
-                const activeList = leaderboardTab === "daily" ? leaderboardData.daily : leaderboardData.allTime;
-                if (!activeList || activeList.length === 0) {
-                  return (
-                    <div className="text-center py-8 text-slate-400 text-sm">
-                      {leaderboardTab === "daily" ? "No scores posted today yet! 🌟" : "No scores posted yet! 🌟"}
-                    </div>
-                  );
-                }
-                return activeList.map((user, idx) => {
-                  const isUser = user.address === (address || "guest");
-                  return (
-                    <div
-                      key={idx}
-                      className={`p-3 rounded-2xl flex justify-between items-center text-sm border transition-all ${
-                        isUser
-                          ? "bg-[#ffd9df] border-[#ffc0cb] font-bold scale-[1.02] shadow-sm"
-                          : "bg-slate-50 border-slate-100 text-slate-700"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="font-bold text-[#81515a] w-5">#{idx + 1}</span>
-                        <span className={`font-semibold font-mono ${isUser ? "text-[#81515a]" : "text-slate-700"}`}>
-                          {user.name} {isUser && <span className="text-xs font-bold text-[#81515a]"> (You)</span>}
-                        </span>
+            <div className="flex flex-col gap-2.5 mb-6">
+              {(!leaderboardData.daily || !leaderboardData.all) ? (
+                <div className="text-center py-8 text-slate-400 text-sm">
+                  Loading leaderboard... 🏆
+                </div>
+              ) : (
+                (() => {
+                  const activeList = leaderboardTab === "daily" ? leaderboardData.daily : leaderboardData.all;
+                  if (activeList.length === 0) {
+                    return (
+                      <div className="text-center py-8 text-slate-400 text-sm">
+                        {leaderboardTab === "daily"
+                          ? "No daily records today. Be the first! ⏱️"
+                          : "No records yet. Play a game! 👑"}
                       </div>
-                      <span className="font-bold text-[#81515a]">{user.score} pts</span>
-                    </div>
-                  );
-                });
-              })()}
+                    );
+                  }
+                  return activeList.map((user: any, idx: number) => {
+                    const isUser = user.address === (address || "guest");
+                    return (
+                      <div
+                        key={idx}
+                        className={`p-3 rounded-2xl flex justify-between items-center text-sm border transition-all ${
+                          isUser
+                            ? "bg-[#ffd9df] border-[#ffc0cb] font-bold scale-[1.02] shadow-sm"
+                            : "bg-slate-50 border-slate-100 text-slate-700"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="font-bold text-[#81515a] w-5">#{idx + 1}</span>
+                          <span className={`font-semibold font-mono ${isUser ? "text-[#81515a]" : "text-slate-700"}`}>
+                            {user.name} {isUser && <span className="text-xs font-bold text-[#81515a]"> (You)</span>}
+                          </span>
+                        </div>
+                        <span className="font-bold text-[#81515a]">{user.score} pts</span>
+                      </div>
+                    );
+                  });
+                })()
+              )}
             </div>
 
             <Button
