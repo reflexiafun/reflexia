@@ -78,3 +78,31 @@ body {
 .animate-pulse-opacity {
   animation: pulseOpacity 1.5s ease-in-out infinite;
 }
+
+@keyframes flyAcross {
+  0% {
+    left: calc(var(--start-x) * 1%);
+    top: calc(var(--start-y) * 1%);
+    transform: translate(-50%, -50%) rotate(0deg) scale(0.8);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    left: calc(var(--end-x) * 1%);
+    top: calc(var(--end-y) * 1%);
+    transform: translate(-50%, -50%) rotate(360deg) scale(1.2);
+    opacity: 0;
+  }
+}
+
+.animate-fly-across {
+  position: absolute;
+  animation: flyAcross var(--fly-duration) linear forwards;
+  z-index: 30;
+}
+

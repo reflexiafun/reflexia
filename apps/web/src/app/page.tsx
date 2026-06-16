@@ -86,6 +86,18 @@ interface Target {
   size: number; // px
 }
 
+interface FlyingIcon {
+  id: number;
+  emoji: string;
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+  duration: number;
+  size: number;
+}
+
+
 const SKIN_THEMES = [
   { id: "default", name: "Cute Pastel ⭐", price: 0, emojis: ["⭐", "☁️", "🎈", "🐰", "🐥", "🌸", "🦄", "🧸", "🍦", "🎀"] },
   { id: "candy", name: "Candy Party 🍭", price: 250, emojis: ["🍭", "🍬", "🍩", "🧁", "🍫", "🍪", "🍿", "🍯", "🍧", "🍮"] },
@@ -197,6 +209,7 @@ export default function Home() {
   const [showTapIndicator, setShowTapIndicator] = useState<{ x: number; y: number; text: string } | null>(null);
   const [hasSpawnedAny, setHasSpawnedAny] = useState(false);
   const [splashProgress, setSplashProgress] = useState(0);
+  const [flyingIcons, setFlyingIcons] = useState<FlyingIcon[]>([]);
 
   // Claim state
   const [claimStatus, setClaimStatus] = useState<"idle" | "claiming" | "claimed">("idle");
@@ -222,6 +235,7 @@ export default function Home() {
 
   const spawnTimerRef = useRef<NodeJS.Timeout | null>(null);
   const gameIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const flyingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const currentTargetId = useRef(0);
   const gameActiveRef = useRef(false);
 
@@ -255,6 +269,7 @@ export default function Home() {
     return () => {
       if (spawnTimerRef.current) clearInterval(spawnTimerRef.current);
       if (gameIntervalRef.current) clearInterval(gameIntervalRef.current);
+      if (flyingTimerRef.current) clearInterval(flyingTimerRef.current);
     };
   }, []);
 
@@ -280,9 +295,11 @@ export default function Home() {
     playSound("click");
     if (spawnTimerRef.current) clearInterval(spawnTimerRef.current);
     if (gameIntervalRef.current) clearInterval(gameIntervalRef.current);
+    if (flyingTimerRef.current) clearInterval(flyingTimerRef.current);
     gameActiveRef.current = false;
     setGameActive(false);
     setTargets([]);
+    setFlyingIcons([]);
     const randomText = COOL_SENTENCES[Math.floor(Math.random() * COOL_SENTENCES.length)];
     setBubbleText(randomText);
     setActiveScreen("home");
@@ -363,6 +380,7 @@ export default function Home() {
     setStreak(0);
     setTimeLeft(15.0);
     setTargets([]);
+    setFlyingIcons([]);
     setHasSpawnedAny(false);
     gameActiveRef.current = true;
     setGameActive(true);
@@ -375,6 +393,11 @@ export default function Home() {
     spawnTimerRef.current = setInterval(() => {
       spawnTarget();
     }, 900);
+
+    // Spawn flying icons (every 1.1s to 1.7s)
+    flyingTimerRef.current = setInterval(() => {
+      spawnFlyingIcon();
+    }, 1300);
 
     // Main clock
     gameIntervalRef.current = setInterval(() => {
@@ -416,6 +439,102 @@ export default function Home() {
     }, 1500);
   };
 
+  const spawnFlyingIcon = () => {
+    if (!gameActiveRef.current) return;
+
+    const emojiPool = ["💫", "⚡", "🚀", "🛸", "👾", "☄️", "💨", "🏃", "🦄", "🕊️", "🐝", "🎈", "⚽", "🏀", "🏎️", "✈️", "✨", "🎯"];
+    const randomEmoji = emojiPool[Math.floor(Math.random() * emojiPool.length)];
+
+    // Path variations
+    const pathType = Math.floor(Math.random() * 5);
+    let startX = 0;
+    let startY = 0;
+    let endX = 0;
+    let endY = 0;
+
+    if (pathType === 0) {
+      // Left to Right
+      startX = -15;
+      startY = Math.random() * 100;
+      endX = 115;
+      endY = Math.random() * 100;
+    } else if (pathType === 1) {
+      // Right to Left
+      startX = 115;
+      startY = Math.random() * 100;
+      endX = -15;
+      endY = Math.random() * 100;
+    } else if (pathType === 2) {
+      // Top to Bottom
+      startX = Math.random() * 100;
+      startY = -15;
+      endX = Math.random() * 100;
+      endY = 115;
+    } else if (pathType === 3) {
+      // Bottom to Top
+      startX = Math.random() * 100;
+      startY = 115;
+      endX = Math.random() * 100;
+      endY = -15;
+    } else {
+      // Corner to Corner (4 variations)
+      const cornerType = Math.floor(Math.random() * 4);
+      if (cornerType === 0) {
+        startX = -15; startY = -15;
+        endX = 115; endY = 115;
+      } else if (cornerType === 1) {
+        startX = 115; startY = -15;
+        endX = -15; endY = 115;
+      } else if (cornerType === 2) {
+        startX = -15; startY = 115;
+        endX = 115; endY = -15;
+      } else {
+        startX = 115; startY = 115;
+        endX = -15; endY = -15;
+      }
+    }
+
+    const duration = Math.floor(Math.random() * 800) + 700; // 700ms to 1500ms
+    const size = Math.floor(Math.random() * 15) + 40; // 40px to 55px
+
+    const newIcon: FlyingIcon = {
+      id: Date.now() + Math.random(),
+      emoji: randomEmoji,
+      startX,
+      startY,
+      endX,
+      endY,
+      duration,
+      size,
+    };
+
+    setFlyingIcons((prev) => [...prev, newIcon]);
+
+    // Automatically remove after the animation completes
+    setTimeout(() => {
+      setFlyingIcons((prev) => prev.filter((item) => item.id !== newIcon.id));
+    }, duration + 100);
+  };
+
+  const handleFlyingIconTap = (icon: FlyingIcon, clickX: number, clickY: number) => {
+    if (!gameActiveRef.current) return;
+
+    playSound("win");
+    const addedPoints = 3;
+    setScore((prev) => prev + addedPoints);
+    setStreak((prev) => prev + 2); // bonus streak boost
+    setShowTapIndicator({ x: clickX, y: clickY, text: `+${addedPoints} Speed Bonus! ⚡` });
+
+    // Remove tapped icon
+    setFlyingIcons((prev) => prev.filter((i) => i.id !== icon.id));
+
+    // Clear indicator after 600ms
+    setTimeout(() => {
+      setShowTapIndicator(null);
+    }, 600);
+  };
+
+
   const handleTargetTap = (target: Target, clickX: number, clickY: number) => {
     if (!gameActiveRef.current) return;
 
@@ -446,6 +565,7 @@ export default function Home() {
   const endGame = () => {
     if (spawnTimerRef.current) clearInterval(spawnTimerRef.current);
     if (gameIntervalRef.current) clearInterval(gameIntervalRef.current);
+    if (flyingTimerRef.current) clearInterval(flyingTimerRef.current);
     gameActiveRef.current = false;
     setGameActive(false);
     playSound("win");
@@ -765,6 +885,34 @@ export default function Home() {
                   }}
                 >
                   <span className="animate-wiggle inline-block">{target.emoji}</span>
+                </button>
+              ))}
+
+              {/* Spawning Flying Icons */}
+              {flyingIcons.map((icon) => (
+                <button
+                  key={icon.id}
+                  onClick={(e) => {
+                    const rect = e.currentTarget.parentElement?.getBoundingClientRect();
+                    if (rect) {
+                      const tapX = ((e.clientX - rect.left) / rect.width) * 100;
+                      const tapY = ((e.clientY - rect.top) / rect.height) * 100;
+                      handleFlyingIconTap(icon, tapX, tapY);
+                    }
+                  }}
+                  className="animate-fly-across active:scale-90 transition-transform flex items-center justify-center select-none cursor-pointer"
+                  style={{
+                    "--start-x": icon.startX,
+                    "--start-y": icon.startY,
+                    "--end-x": icon.endX,
+                    "--end-y": icon.endY,
+                    "--fly-duration": `${icon.duration}ms`,
+                    width: `${icon.size}px`,
+                    height: `${icon.size}px`,
+                    fontSize: `${icon.size * 0.6}px`,
+                  } as React.CSSProperties}
+                >
+                  <span className="drop-shadow-md">{icon.emoji}</span>
                 </button>
               ))}
 
