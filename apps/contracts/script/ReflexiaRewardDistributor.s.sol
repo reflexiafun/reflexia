@@ -16,9 +16,16 @@ contract DeployReflexiaRewardDistributor is Script {
         vm.startBroadcast();
         address deployer = msg.sender;
 
-        // Deploy Mock USDm Token
-        MockERC20 token = new MockERC20();
-        console2.log("Mock USDm deployed at:", address(token));
+        address tokenAddress;
+        if (block.chainid == 42220) {
+            tokenAddress = 0x765DE816845861e75A25fCA122bb6898B8B1282a;
+            console2.log("Using Real USDm token at:", tokenAddress);
+        } else {
+            // Deploy Mock USDm Token
+            MockERC20 token = new MockERC20();
+            tokenAddress = address(token);
+            console2.log("Mock USDm deployed at:", tokenAddress);
+        }
 
         // Use the first account as signer
         address signerAddress = vm.envOr("SIGNER_ADDRESS", deployer);
@@ -29,16 +36,20 @@ contract DeployReflexiaRewardDistributor is Script {
         uint256 maxTotalPayout = 10000 * 10**18; // 10,000 USDm
 
         ReflexiaRewardDistributor distributor = new ReflexiaRewardDistributor(
-            address(token),
+            tokenAddress,
             signerAddress,
             maxDailyPayoutPerUser,
             maxTotalPayout
         );
         console2.log("Distributor deployed at:", address(distributor));
 
-        // Fund the distributor with some USDm
-        token.transfer(address(distributor), 10000 * 10**18);
-        console2.log("Funded distributor with 10,000 USDm");
+        // Fund the distributor with some USDm (only for local/testnet tests)
+        if (block.chainid != 42220) {
+            MockERC20(tokenAddress).transfer(address(distributor), 10000 * 10**18);
+            console2.log("Funded distributor with 10,000 USDm");
+        } else {
+            console2.log("Please fund the distributor contract manually with real USDm tokens.");
+        }
 
         vm.stopBroadcast();
     }
