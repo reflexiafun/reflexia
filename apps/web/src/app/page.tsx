@@ -74,7 +74,8 @@ type ScreenType =
   | "reward"
   | "shop"
   | "leaderboard"
-  | "profile";
+  | "profile"
+  | "spin";
 
 interface Target {
   id: number;
@@ -86,10 +87,16 @@ interface Target {
 }
 
 const SKIN_THEMES = [
-  { id: "default", name: "Cute Pastel ⭐", price: 0, emojis: ["⭐", "☁️", "🎈", "🐰", "🐥"] },
-  { id: "candy", name: "Candy Party 🍭", price: 100, emojis: ["🍭", "🍬", "🍩", "🧁", "🍫"] },
-  { id: "space", name: "Cosmic Baby 🚀", price: 250, emojis: ["🚀", "🪐", "🛸", "☄️", "👾"] },
-  { id: "animal", name: "Safari Friends 🦁", price: 500, emojis: ["🦁", "🐼", "🐨", "🐸", "🦊"] },
+  { id: "default", name: "Cute Pastel ⭐", price: 0, emojis: ["⭐", "☁️", "🎈", "🐰", "🐥", "🌸", "🦄", "🧸", "🍦", "🎀"] },
+  { id: "candy", name: "Candy Party 🍭", price: 250, emojis: ["🍭", "🍬", "🍩", "🧁", "🍫", "🍪", "🍿", "🍯", "🍧", "🍮"] },
+  { id: "space", name: "Cosmic Baby 🚀", price: 500, emojis: ["🚀", "🪐", "🛸", "☄️", "👾", "🌟", "🛰️", "👽", "🌙", "🌍"] },
+  { id: "animal", name: "Safari Friends 🦁", price: 1000, emojis: ["🦁", "🐼", "🐨", "🐸", "🦊", "🐯", "🦒", "🦓", "🐵", "🐘"] },
+];
+
+const FORBIDDEN_EMOJI_POOL = [
+  "💣", "💥", "☠️", "👻", "💩", "👾", "👿", "🌀", "🕸️", "☣️", "☢️", "👽", "👹", "👺", "🃏",
+  "💀", "🧟", "🧛", "🧙", "🧌", "🌋", "🌪️", "⚡", "🔥", "⚔️", "🔪", "⛓️", "🕷️", "🦂", "🐍",
+  "🦟", "🪳", "🪰", "🪲", "⚰️", "🪦", "🔮", "🩹"
 ];
 
 const MASCOT_EMOJIS = ["🐹", "🐱", "🐶", "🦊", "🦁", "🐯", "🐻", "🐼", "🐨", "🐰", "🦄", "🐸", "🐷", "🐧", "🐥", "🐣", "🐵", "🐨", "🐺", "🐿️"];
@@ -129,6 +136,9 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [loadedAddress, setLoadedAddress] = useState<string | null>(null);
   const [mascotEmoji, setMascotEmoji] = useState("🐹");
+  const [forbiddenEmojis, setForbiddenEmojis] = useState<string[]>(["💣", "☠️", "👻"]);
+  const [spinEmojis, setSpinEmojis] = useState<string[]>(["❓", "❓", "❓"]);
+  const [isSpinning, setIsSpinning] = useState(false);
 
   const currentAddressKey = address || "guest";
   const storageKey = `reflexia_game_data_${currentAddressKey}`;
@@ -278,6 +288,74 @@ export default function Home() {
     setActiveScreen("home");
   };
 
+  const startSpinPhase = () => {
+    playSound("click");
+    setActiveScreen("spin");
+    setIsSpinning(true);
+    setSpinEmojis(["❓", "❓", "❓"]);
+
+    // Find current active theme emojis
+    const currentTheme = SKIN_THEMES.find((t) => t.id === selectedSkin) || SKIN_THEMES[0];
+
+    // Filter forbidden emoji pool to NOT include current theme emojis
+    const filteredPool = FORBIDDEN_EMOJI_POOL.filter(
+      (e) => !currentTheme.emojis.includes(e)
+    );
+
+    // Pick 3 random unique emojis
+    const chosen: string[] = [];
+    const tempPool = [...filteredPool];
+    for (let i = 0; i < 3; i++) {
+      if (tempPool.length === 0) break;
+      const randIdx = Math.floor(Math.random() * tempPool.length);
+      chosen.push(tempPool.splice(randIdx, 1)[0]);
+    }
+    while (chosen.length < 3) {
+      chosen.push("❌");
+    }
+
+    setForbiddenEmojis(chosen);
+
+    let intervalCount = 0;
+    const intervalTime = 80;
+
+    const spinInterval = setInterval(() => {
+      intervalCount += intervalTime;
+
+      setSpinEmojis((prev) => {
+        const next = [...prev];
+        if (intervalCount < 1000) {
+          next[0] = filteredPool[Math.floor(Math.random() * filteredPool.length)] || "❌";
+        } else {
+          next[0] = chosen[0];
+        }
+
+        if (intervalCount < 1600) {
+          next[1] = filteredPool[Math.floor(Math.random() * filteredPool.length)] || "❌";
+        } else {
+          next[1] = chosen[1];
+        }
+
+        if (intervalCount < 2200) {
+          next[2] = filteredPool[Math.floor(Math.random() * filteredPool.length)] || "❌";
+        } else {
+          next[2] = chosen[2];
+        }
+
+        return next;
+      });
+
+      if (intervalCount === 1000 || intervalCount === 1600 || intervalCount === 2200) {
+        playSound("tap");
+      }
+
+      if (intervalCount >= 2200) {
+        clearInterval(spinInterval);
+        setIsSpinning(false);
+      }
+    }, intervalTime);
+  };
+
   // Start game loop
   const startGame = () => {
     playSound("start");
@@ -316,7 +394,9 @@ export default function Home() {
     // Get current skin emojis
     const currentTheme = SKIN_THEMES.find((t) => t.id === selectedSkin) || SKIN_THEMES[0];
     const isFake = Math.random() < 0.25; // 25% chance of fake target
-    const randomEmoji = isFake ? "❌" : currentTheme.emojis[Math.floor(Math.random() * currentTheme.emojis.length)];
+    const randomEmoji = isFake
+      ? (forbiddenEmojis[Math.floor(Math.random() * forbiddenEmojis.length)] || "❌")
+      : currentTheme.emojis[Math.floor(Math.random() * currentTheme.emojis.length)];
 
     const newTarget: Target = {
       id: currentTargetId.current++,
@@ -344,7 +424,7 @@ export default function Home() {
       playSound("fail");
       setScore((prev) => Math.max(0, prev - 2));
       setStreak(0);
-      setShowTapIndicator({ x: clickX, y: clickY, text: "-2 ❌ Oops!" });
+      setShowTapIndicator({ x: clickX, y: clickY, text: `-2 ${target.emoji} Oops!` });
     } else {
       // Good tap
       playSound("tap");
@@ -488,7 +568,7 @@ export default function Home() {
             {/* Navigation buttons */}
             <div className="w-full flex flex-col gap-3">
               <Button
-                onClick={startGame}
+                onClick={startSpinPhase}
                 className="w-full py-7 text-xl font-bold bg-[#81515a] hover:bg-[#663a43] text-white rounded-2xl clay-button-primary"
               >
                 Play Now! 🎮
@@ -527,6 +607,52 @@ export default function Home() {
           </div>
         )}
 
+        {/* SPIN SCREEN */}
+        {activeScreen === "spin" && (
+          <div className="w-full bg-white p-6 rounded-3xl clay-card flex flex-col items-center text-center">
+            <h2 className="text-2xl font-bold text-[#81515a] mb-2">Lucky Box Spin! 🎁</h2>
+            <p className="text-xs text-slate-500 mb-6 max-w-[280px]">
+              {isSpinning
+                ? "Spinning the boxes to reveal 3 forbidden emojis..."
+                : "Remember these 3 emojis! Tapping them will deduct points!"}
+            </p>
+
+            {/* The 3 Slots */}
+            <div className="flex gap-4 justify-center items-center mb-8 w-full">
+              {[0, 1, 2].map((idx) => (
+                <div
+                  key={idx}
+                  className={`w-24 h-24 rounded-2xl bg-[#fff8f7] border-4 border-white shadow-[0_8px_16px_rgba(0,0,0,0.06),inset_0_4px_0_rgba(255,255,255,0.6)] flex items-center justify-center text-4xl select-none transition-all duration-300 ${isSpinning ? "animate-pulse scale-95 border-pink-200" : "border-red-300"
+                    }`}
+                >
+                  <span className="drop-shadow-md">{spinEmojis[idx]}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Action buttons */}
+            <div className="w-full flex flex-col gap-3">
+              <Button
+                onClick={startGame}
+                disabled={isSpinning}
+                className={`w-full py-5 text-lg font-bold rounded-2xl transition-all duration-300 ${isSpinning
+                  ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                  : "bg-[#81515a] hover:bg-[#663a43] text-white clay-button-primary"
+                  }`}
+              >
+                {isSpinning ? "Spinning..." : "Let's Go!"}
+              </Button>
+              <Button
+                onClick={() => changeScreen("home")}
+                disabled={isSpinning}
+                className="w-full py-4 font-bold bg-[#e2d8d8] text-[#514345] hover:bg-[#eae0e0] rounded-2xl clay-card"
+              >
+                Back to Menu
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* HELP / TUTORIAL */}
         {activeScreen === "tutorial" && (
           <div className="w-full bg-white p-6 rounded-3xl clay-card flex flex-col items-center">
@@ -535,16 +661,16 @@ export default function Home() {
               <div className="flex items-center gap-3 p-3 bg-green-50 rounded-2xl">
                 <span className="text-3xl">⭐</span>
                 <div>
-                  <h3 className="font-bold text-green-800">Tap Cute Targets</h3>
+                  <h3 className="font-bold text-green-800">Tap Correct Targets</h3>
                   <p className="text-xs">Tap stars, balloons, or bunnies quickly to gain points and streaks!</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3 p-3 bg-red-50 rounded-2xl">
-                <span className="text-3xl">❌</span>
+                <span className="text-3xl">💣</span>
                 <div>
-                  <h3 className="font-bold text-red-800">Avoid Fake Targets</h3>
-                  <p className="text-xs">Do NOT tap the red cross targets, they reduce your points!</p>
+                  <h3 className="font-bold text-red-800">Avoid Forbidden Targets</h3>
+                  <p className="text-xs">Do NOT tap the 3 forbidden emojis selected by the Lucky Box Spin!</p>
                 </div>
               </div>
 
@@ -582,6 +708,18 @@ export default function Home() {
               <div className="text-right">
                 <p className="text-xs font-semibold text-[#514345]">TIME LEFT</p>
                 <p className="text-2xl font-bold text-[#81515a]">{timeLeft}s</p>
+              </div>
+            </div>
+
+            {/* Forbidden Emojis (Avoid targets) */}
+            <div className="w-full bg-[#fcf1f1] px-4 py-2 rounded-2xl border border-pink-100 flex items-center justify-between mb-4 shadow-sm">
+              <span className="text-xs font-bold text-[#81515a] uppercase tracking-wider">DO NOT TAP:</span>
+              <div className="flex gap-3">
+                {forbiddenEmojis.map((emoji, idx) => (
+                  <span key={idx} className="text-2xl animate-pulse" style={{ animationDelay: `${idx * 0.3}s` }}>
+                    {emoji}
+                  </span>
+                ))}
               </div>
             </div>
 
@@ -676,7 +814,7 @@ export default function Home() {
                 </Button>
               )}
               <Button
-                onClick={startGame}
+                onClick={startSpinPhase}
                 className="w-full py-5 font-bold bg-[#81515a] hover:bg-[#663a43] text-white rounded-2xl clay-button-primary"
               >
                 Play Again
@@ -703,7 +841,7 @@ export default function Home() {
                 </p>
                 <div className="bg-[#fcf1f1] p-5 rounded-2xl border-2 border-white mb-4">
                   <p className="text-xs text-[#81515a] font-bold">REWARD AMOUNT</p>
-                  <p className="text-3xl font-bold text-[#81515a] mt-1">0.10 USDm</p>
+                  <p className="text-3xl font-bold text-[#81515a] mt-1">0.01 USDm</p>
                 </div>
                 <p className="text-[11px] text-slate-500 mb-4 italic leading-relaxed">
                   Note: You can swap your USDm to USDT/USDC using MiniPay Pockets.
@@ -787,7 +925,7 @@ export default function Home() {
                     <div className="text-left">
                       <p className="font-bold text-sm text-[#81515a]">{theme.name}</p>
                       <p className="text-xs text-slate-400 mt-1">
-                        Emojis: {theme.emojis.slice(0, 4).join(" ")}
+                        Emojis: {theme.emojis.join(" ")}
                       </p>
                     </div>
 
@@ -825,9 +963,9 @@ export default function Home() {
 
             <div className="flex flex-col gap-2.5 mb-6">
               {[
-                { rank: 1, name: "0x71C5...4382 🐇", score: 28 },
-                { rank: 2, name: "0xE0F7...A918 🐥", score: 25 },
-                { rank: 3, name: "0x3A5d...8C12 ⭐", score: 22 },
+                { rank: 1, name: "0x71C5...4382", score: 28 },
+                { rank: 2, name: "0xE0F7...A918", score: 25 },
+                { rank: 3, name: "0x3A5d...8C12", score: 22 },
                 {
                   rank: 4,
                   name: mounted && isConnected && address

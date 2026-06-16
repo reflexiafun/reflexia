@@ -2,7 +2,7 @@ Here is the PRD for **Reflexia** with a **cute pastel / Web3 casual** theme. I f
 
 ## 1. Product Summary
 
-Reflexia is a fast-paced reflex mini-game that challenges players to tap cute targets as quickly as possible before they disappear or change. The visual theme is designed to be **cute pastel**: filled with soft bright colors, cute characters, gentle animations, and a UI that feels safe and welcoming for all casual players. The game is suitable for short play sessions of 10–30 seconds per round, after which players can earn points, items, or small performance-based rewards. [youtube](https://www.youtube.com/watch?v=Bt6cdA1w_no)
+Reflexia is a fast-paced reflex mini-game that challenges players to tap correct targets as quickly as possible before they disappear or change. The visual theme is designed to be **cute pastel**: filled with soft bright colors, cute characters, gentle animations, and a UI that feels safe and welcoming for all casual players. The game is suitable for short play sessions of 10–30 seconds per round, after which players can earn points, items, or small performance-based rewards. [youtube](https://www.youtube.com/watch?v=Bt6cdA1w_no)
 
 ## 2. Product Objectives
 
