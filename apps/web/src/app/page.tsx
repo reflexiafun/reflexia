@@ -6,7 +6,7 @@ import { useAccount } from "wagmi";
 import { useReward } from "partycles";
 
 // Sound effects using Web Audio API
-const playSound = (type: "start" | "tap" | "fail" | "win" | "click") => {
+const playSound = (type: "start" | "tap" | "fail" | "win" | "click" | "spin" | "spin-tick") => {
   if (typeof window === "undefined") return;
   try {
     const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -59,6 +59,23 @@ const playSound = (type: "start" | "tap" | "fail" | "win" | "click") => {
       gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
       osc.start(now);
       osc.stop(now + 0.5);
+    } else if (type === "spin") {
+      // Swirling low-to-high whoosh
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(150, now);
+      osc.frequency.exponentialRampToValueAtTime(600, now + 0.5);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+      osc.start(now);
+      osc.stop(now + 0.5);
+    } else if (type === "spin-tick") {
+      // Very short high-pitched click
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(800, now);
+      gain.gain.setValueAtTime(0.06, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      osc.start(now);
+      osc.stop(now + 0.05);
     }
   } catch (e) {
     console.error("Audio Context failed", e);
@@ -113,6 +130,20 @@ const FORBIDDEN_EMOJI_POOL = [
 
 const MASCOT_EMOJIS = ["🐹", "🐱", "🐶", "🦊", "🦁", "🐯", "🐻", "🐼", "🐨", "🐰", "🦄", "🐸", "🐷", "🐧", "🐥", "🐣", "🐵", "🐨", "🐺", "🐿️"];
 
+// Theme-consistent pastel bg colors for the mascot circle
+const MASCOT_BG_COLORS = [
+  "#ffd9df", // soft pink (default)
+  "#f0e3a4", // warm yellow
+  "#c8e6d4", // sage green
+  "#c5dce8", // sky blue
+  "#dbd3f0", // lavender
+  "#f5d4c0", // peach
+  "#d4ecf7", // baby blue
+  "#fce4c8", // apricot
+  "#e4d4ec", // soft purple
+  "#cde8e0", // mint
+];
+
 const COOL_SENTENCES = [
   "Ready, set, tap! 🚀",
   "Show me your lightning-fast reflex! ⚡",
@@ -148,9 +179,11 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [loadedAddress, setLoadedAddress] = useState<string | null>(null);
   const [mascotEmoji, setMascotEmoji] = useState("🐹");
+  const [mascotBgColor, setMascotBgColor] = useState(MASCOT_BG_COLORS[0]);
   const [forbiddenEmojis, setForbiddenEmojis] = useState<string[]>(["💣", "☠️", "👻"]);
   const [spinEmojis, setSpinEmojis] = useState<string[]>(["❓", "❓", "❓"]);
   const [isSpinning, setIsSpinning] = useState(false);
+  const [settledBoxes, setSettledBoxes] = useState<boolean[]>([false, false, false]);
 
   const currentAddressKey = address || "guest";
   const storageKey = `reflexia_game_data_${currentAddressKey}`;
@@ -198,7 +231,32 @@ export default function Home() {
     };
     localStorage.setItem(storageKey, JSON.stringify(data));
   }, [stars, highScore, totalGames, streakDays, unlockedSkins, selectedSkin, storageKey, mounted, loadedAddress, currentAddressKey]);
+
   const [bubbleText, setBubbleText] = useState("Let's test your reflex! ⚡");
+  const [displayedBubbleText, setDisplayedBubbleText] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+
+  // Typing effect for the bubble text
+  useEffect(() => {
+    const chars = Array.from(bubbleText);
+    let current = "";
+    setDisplayedBubbleText("");
+    if (chars.length === 0) return;
+
+    setIsTyping(true);
+    let index = 0;
+    const interval = setInterval(() => {
+      current += chars[index];
+      setDisplayedBubbleText(current);
+      index++;
+      if (index >= chars.length) {
+        clearInterval(interval);
+        setIsTyping(false);
+      }
+    }, 45); // 45ms per character typing speed
+
+    return () => clearInterval(interval);
+  }, [bubbleText]);
 
   // Game state
   const [score, setScore] = useState(0);
@@ -287,6 +345,8 @@ export default function Home() {
     const filtered = MASCOT_EMOJIS.filter((e) => e !== mascotEmoji);
     const randomMascot = filtered[Math.floor(Math.random() * filtered.length)];
     setMascotEmoji(randomMascot);
+    const filteredColors = MASCOT_BG_COLORS.filter((c) => c !== mascotBgColor);
+    setMascotBgColor(filteredColors[Math.floor(Math.random() * filteredColors.length)]);
     const randomText = COOL_SENTENCES[Math.floor(Math.random() * COOL_SENTENCES.length)];
     setBubbleText(randomText);
   };
@@ -307,9 +367,11 @@ export default function Home() {
 
   const startSpinPhase = () => {
     playSound("click");
+    playSound("spin");
     setActiveScreen("spin");
     setIsSpinning(true);
     setSpinEmojis(["❓", "❓", "❓"]);
+    setSettledBoxes([false, false, false]);
 
     // Find current active theme emojis
     const currentTheme = SKIN_THEMES.find((t) => t.id === selectedSkin) || SKIN_THEMES[0];
@@ -362,8 +424,29 @@ export default function Home() {
         return next;
       });
 
-      if (intervalCount === 1000 || intervalCount === 1600 || intervalCount === 2200) {
-        playSound("tap");
+      const nextSettled = [
+        intervalCount >= 1000,
+        intervalCount >= 1600,
+        intervalCount >= 2200
+      ];
+
+      const prevSettled0 = (intervalCount - intervalTime) >= 1000;
+      const prevSettled1 = (intervalCount - intervalTime) >= 1600;
+      const prevSettled2 = (intervalCount - intervalTime) >= 2200;
+
+      // Play tap sound when each box settles
+      if (nextSettled[0] && !prevSettled0) playSound("tap");
+      if (nextSettled[1] && !prevSettled1) playSound("tap");
+      if (nextSettled[2] && !prevSettled2) playSound("tap");
+
+      setSettledBoxes(nextSettled);
+
+      // Play tick sound for spinning boxes
+      if (!nextSettled[2]) {
+        const justSettled = (nextSettled[0] && !prevSettled0) || (nextSettled[1] && !prevSettled1);
+        if (!justSettled) {
+          playSound("spin-tick");
+        }
       }
 
       if (intervalCount >= 2200) {
@@ -624,7 +707,7 @@ export default function Home() {
         {/* SPLASH SCREEN */}
         {activeScreen === "splash" && (
           <div className="flex flex-col items-center text-center">
-            <div className="w-48 h-48 mb-8 animate-wiggle flex items-center justify-center">
+            <div className="w-48 h-48 mb-8 flex items-center justify-center">
               <img src="/logo.png" alt="Reflexia Logo" className="w-full h-full object-contain" />
             </div>
             {/* Premium Progress Bar with Circular Decors */}
@@ -634,7 +717,7 @@ export default function Home() {
                 ✨
               </div>
               {/* Bottom circular decor */}
-              <div className="absolute -bottom-4 left-1/4 w-6 h-6 rounded-full bg-white shadow-[0_4px_8px_rgba(0,0,0,0.05)] border-2 border-white z-0 animate-bounce" style={{ animationDuration: '4s' }}></div>
+              <div className="absolute -bottom-4 left-1/4 w-6 h-6 rounded-full bg-white shadow-[0_4px_8px_rgba(0,0,0,0.05)] border-2 border-white z-0 animate-bounce-slow"></div>
               {/* Right circular decor */}
               <div className="absolute -right-3 w-10 h-10 rounded-full bg-white shadow-[0_4px_8px_rgba(0,0,0,0.05)] border-2 border-white z-0"></div>
 
@@ -660,26 +743,34 @@ export default function Home() {
         {activeScreen === "home" && (
           <div className="w-full flex flex-col items-center">
             {/* Top Stars & Streak bar */}
-            <div className="w-full flex justify-between gap-3 mb-6">
-              <div className="flex-1 bg-white px-4 py-2 rounded-2xl clay-card flex items-center justify-between">
-                <span className="text-[#81515a] font-bold text-sm">⭐ Stars</span>
-                <span className="text-[#81515a] font-bold text-lg">{stars}</span>
+            <div className="w-full flex flex-wrap justify-between gap-3 mb-6">
+              <div className="flex-grow flex-shrink basis-[150px] bg-white px-4 py-2.5 rounded-2xl clay-card flex items-center justify-between gap-2 min-w-0">
+                <span className="text-[#81515a] font-bold text-sm flex items-center gap-1 whitespace-nowrap">
+                  <span>⭐</span> Stars
+                </span>
+                <span className="text-[#81515a] font-bold text-lg whitespace-nowrap">{stars}</span>
               </div>
-              <div className="flex-1 bg-[#f0e3a4] px-4 py-2 rounded-2xl clay-card flex items-center justify-between border-2 border-white">
-                <span className="text-[#201c00] font-bold text-sm">🔥 Streak</span>
-                <span className="text-[#201c00] font-bold text-lg">{streakDays} Day</span>
+              <div className="flex-grow flex-shrink basis-[170px] bg-[#f0e3a4] px-4 py-2.5 rounded-2xl clay-card flex items-center justify-between gap-2 min-w-0 border-2 border-white">
+                <span className="text-[#201c00] font-bold text-sm flex items-center gap-1 whitespace-nowrap">
+                  <span>🔥</span> Streak
+                </span>
+                <span className="text-[#201c00] font-bold text-lg whitespace-nowrap">{streakDays} Day</span>
               </div>
             </div>
 
             {/* Mascot and speech bubble */}
             <div className="relative mb-8 group w-full flex flex-col items-center">
-              <div className="bg-white px-5 py-3 rounded-2xl clay-card whitespace-nowrap animate-bounce mb-6 relative">
-                <span className="font-bold text-lg text-[#81515a]">{bubbleText}</span>
+              <div className="bg-white px-5 py-3 rounded-2xl clay-card whitespace-nowrap animate-float mb-6 relative">
+                <span className="font-bold text-lg text-[#81515a] inline-flex items-center">
+                  {displayedBubbleText}
+                  <span className={`inline-block w-[3px] h-[18px] ml-1 bg-[#81515a] rounded-full ${isTyping ? "animate-pulse" : "opacity-0"}`} />
+                </span>
                 <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-4 bg-white bubble-tail"></div>
               </div>
               <div
                 onClick={randomizeMascot}
-                className="w-48 h-48 bg-[#ffd9df] rounded-full border-4 border-white flex items-center justify-center text-[115px] shadow-[0_20px_40px_rgba(0,0,0,0.06)] animate-wiggle cursor-pointer active:scale-95 transition-transform"
+                className="w-48 h-48 rounded-full border-4 border-white flex items-center justify-center text-[115px] shadow-[0_20px_40px_rgba(0,0,0,0.06)] cursor-pointer active:scale-95 transition-all duration-500"
+                style={{ backgroundColor: mascotBgColor }}
               >
                 {mascotEmoji}
               </div>
@@ -724,6 +815,33 @@ export default function Home() {
                 </Button>
               </div>
             </div>
+
+            {/* Footer */}
+            <div className="w-full mt-8 flex flex-col items-center gap-2">
+              {/* Divider */}
+              <div className="w-full flex items-center gap-3 mb-1">
+                <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#d5c2c4] to-transparent" />
+                <span className="text-[#d5c2c4] text-xs">✦</span>
+                <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#d5c2c4] to-transparent" />
+              </div>
+
+              {/* Brand name */}
+              <p className="text-[#81515a] font-bold text-sm tracking-widest">
+                Reflexia
+              </p>
+
+              {/* Year */}
+              <p className="text-[#a08085] text-xs font-medium">© 2026 · All rights reserved</p>
+
+              {/* Built on Celo badge */}
+              <div className="flex items-center gap-2 bg-white border-2 border-[#f0e6e6] rounded-full px-4 py-1.5 shadow-sm mt-1">
+                <span className="text-sm">🟡</span>
+                <span>
+                  <span className="text-[#514345] text-xs font-semibold tracking-wide">Built on </span>
+                  <span className="text-[#81515a] text-xs font-bold tracking-wide">Celo</span>
+                </span>
+              </div>
+            </div>
           </div>
         )}
 
@@ -738,11 +856,13 @@ export default function Home() {
             </p>
 
             {/* The 3 Slots */}
-            <div className="flex gap-4 justify-center items-center mb-8 w-full">
+            <div className="flex gap-2 sm:gap-4 justify-center items-center mb-8 w-full">
               {[0, 1, 2].map((idx) => (
                 <div
                   key={idx}
-                  className={`w-24 h-24 rounded-2xl bg-[#fff8f7] border-4 border-white shadow-[0_8px_16px_rgba(0,0,0,0.06),inset_0_4px_0_rgba(255,255,255,0.6)] flex items-center justify-center text-4xl select-none transition-all duration-300 ${isSpinning ? "animate-pulse scale-95 border-pink-200" : "border-red-300"
+                  className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-[#fff8f7] border-4 flex items-center justify-center text-3xl sm:text-4xl select-none transition-all duration-300 ${settledBoxes[idx]
+                    ? "border-[#81515a] scale-105"
+                    : "animate-pulse-slow scale-95 border-pink-200"
                     }`}
                 >
                   <span className="drop-shadow-md">{spinEmojis[idx]}</span>
@@ -833,7 +953,7 @@ export default function Home() {
 
             {/* Forbidden Emojis (Avoid targets) */}
             <div className="w-full bg-[#fcf1f1] px-4 py-2 rounded-2xl border border-pink-100 flex items-center justify-between mb-4 shadow-sm">
-              <span className="text-xs font-bold text-[#81515a] uppercase tracking-wider">DO NOT TAP:</span>
+              <span className="text-xs font-bold text-[#81515a] tracking-wider">DO NOT TAP:</span>
               <div className="flex gap-3">
                 {forbiddenEmojis.map((emoji, idx) => (
                   <span key={idx} className="text-2xl animate-pulse" style={{ animationDelay: `${idx * 0.3}s` }}>
@@ -856,7 +976,7 @@ export default function Home() {
               {/* Tap feedback indicator */}
               {showTapIndicator && (
                 <div
-                  className="text-nowrap absolute pointer-events-none transform -translate-x-1/2 -translate-y-1/2 animate-bounce z-50 bg-[#ffc0cb] border-2 border-white text-xs font-bold text-[#81515a] px-3 py-1.5 rounded-full shadow-lg"
+                  className="text-nowrap absolute pointer-events-none transform -translate-x-1/2 -translate-y-1/2 animate-bounce-slow z-50 bg-[#ffc0cb] border-2 border-white text-xs font-bold text-[#81515a] px-3 py-1.5 rounded-full shadow-lg"
                   style={{ left: `${showTapIndicator.x}%`, top: `${showTapIndicator.y}%` }}
                 >
                   {showTapIndicator.text}
@@ -884,7 +1004,7 @@ export default function Home() {
                     fontSize: `${target.size * 0.6}px`,
                   }}
                 >
-                  <span className="animate-wiggle inline-block">{target.emoji}</span>
+                  <span className="inline-block">{target.emoji}</span>
                 </button>
               ))}
 
@@ -936,7 +1056,7 @@ export default function Home() {
         {activeScreen === "result" && (
           <div className="w-full bg-white p-6 rounded-3xl clay-card flex flex-col items-center">
             <h2 className="text-3xl font-bold text-[#81515a] mb-2">Game Over! 🏁</h2>
-            <div className="w-24 h-24 bg-[#ffd9df] rounded-full border-4 border-white flex items-center justify-center text-5xl mb-4 animate-wiggle">
+            <div className="w-24 h-24 bg-[#ffd9df] rounded-full border-4 border-white flex items-center justify-center text-5xl mb-4">
               🏆
             </div>
 
@@ -956,7 +1076,7 @@ export default function Home() {
               {score >= 8 && (
                 <Button
                   onClick={() => changeScreen("reward")}
-                  className="w-full py-5 font-bold bg-[#675f2d] hover:bg-[#4f4717] text-white rounded-2xl clay-button-primary animate-bounce"
+                  className="w-full py-5 font-bold bg-[#675f2d] hover:bg-[#4f4717] text-white rounded-2xl clay-button-primary animate-bounce-slow"
                 >
                   🎁 Claim USDm Reward!
                 </Button>
@@ -1022,13 +1142,25 @@ export default function Home() {
                 {/* Confetti celebration anchor */}
                 <div className="relative w-full h-[150px] rounded-2xl border-4 border-white shadow-[0_8px_16px_rgba(0,0,0,0.06),inset_0_4px_0_rgba(0,0,0,0.05)] bg-[#fff8f7] mb-6 flex flex-col items-center justify-center overflow-visible">
                   <div ref={rewardRef} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 overflow-visible z-50" />
-                  <span className="text-6xl animate-bounce duration-1000 select-none">💰</span>
+                  <span className="text-6xl animate-bounce-slow select-none">💰</span>
                   <p className="text-xs font-bold text-[#81515a] mt-2">Claim Completed!</p>
                 </div>
 
                 <div className="bg-[#fcf1f1] p-3 rounded-xl text-left mb-6 overflow-hidden">
-                  <p className="text-[10px] font-bold text-[#81515a]">TRANSACTION HASH</p>
-                  <p className="text-[10px] text-slate-500 font-mono break-all select-all mt-1">{txHash}</p>
+                  <p className="text-[10px] font-bold text-[#81515a] mb-1 tracking-wider">Transaction Hash</p>
+                  <a
+                    href={`https://celoscan.io/tx/${txHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 group"
+                  >
+                    <span className="text-[11px] text-slate-500 font-mono truncate">
+                      {txHash.slice(0, 10)}...{txHash.slice(-8)}
+                    </span>
+                    <span className="shrink-0 text-[#81515a] opacity-60 group-hover:opacity-100 transition-opacity text-sm">
+                      🔗
+                    </span>
+                  </a>
                 </div>
 
                 <Button
@@ -1151,7 +1283,7 @@ export default function Home() {
           <div className="w-full bg-white p-6 rounded-3xl clay-card flex flex-col items-center">
             <h2 className="text-2xl font-bold text-[#81515a] mb-6">Player Stats 🐱</h2>
 
-            <div className="w-20 h-20 bg-[#ffc0cb] rounded-full border-4 border-white flex items-center justify-center text-4xl mb-4 animate-wiggle">
+            <div className="w-20 h-20 bg-[#ffc0cb] rounded-full border-4 border-white flex items-center justify-center text-4xl mb-4">
               🐱
             </div>
 

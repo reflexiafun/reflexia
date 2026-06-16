@@ -79,6 +79,15 @@ body {
   animation: pulseOpacity 1.5s ease-in-out infinite;
 }
 
+@keyframes pulseSlow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.animate-pulse-slow {
+  animation: pulseSlow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
 @keyframes flyAcross {
   0% {
     left: calc(var(--start-x) * 1%);
