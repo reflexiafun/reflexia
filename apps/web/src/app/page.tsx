@@ -770,7 +770,7 @@ export default function Home() {
               </div>
               <div
                 onClick={randomizeMascot}
-                className="w-48 h-48 rounded-full border-4 border-white flex items-center justify-center text-[115px] shadow-[0_20px_40px_rgba(0,0,0,0.06)] cursor-pointer active:scale-95 transition-all duration-500"
+                className="w-48 h-48 rounded-full border-4 border-white flex items-center justify-center text-[115px] shadow-[0_20px_40px_rgba(0,0,0,0.06)] cursor-pointer transition-all duration-500"
                 style={{ backgroundColor: mascotBgColor }}
               >
                 {mascotEmoji}
@@ -836,7 +836,11 @@ export default function Home() {
 
               {/* Built on Celo badge */}
               <div className="flex items-center gap-2 bg-white border-2 border-[#f0e6e6] rounded-full px-4 py-1.5 shadow-sm mt-1">
-                <span className="text-sm">🟡</span>
+                <img
+                  src="https://coin-images.coingecko.com/coins/images/11090/large/InjXBNx9_400x400.jpg?1696511031"
+                  alt="Celo"
+                  className="w-4 h-4 rounded-full object-cover"
+                />
                 <span>
                   <span className="text-[#514345] text-xs font-semibold tracking-wide">Built on </span>
                   <span className="text-[#81515a] text-xs font-bold tracking-wide">Celo</span>
