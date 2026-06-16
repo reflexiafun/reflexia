@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --border: 214.3 31.8% 91.4%;
+    --input: 216 33% 97%;
+    --ring: 215 20.2% 65.1%;
+
+    --background: 0 0% 98%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 345 23% 41%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 194 32% 33%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --radius: 1rem;
+  }
+}
+
+body {
+  background-color: #fff8f7;
+  color: #1f1a1b;
+  overflow-x: hidden;
+}
+
+.clay-card {
+  box-shadow: 0 20px 40px rgba(0,0,0,0.08), inset 0 4px 0 rgba(255,255,255,0.8), inset 0 -4px 0 rgba(0,0,0,0.05);
+  border: 4px solid #ffffff;
+}
+
+.clay-button-primary {
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1), inset 0 4px 0 rgba(255,255,255,0.4), inset 0 -4px 0 rgba(0,0,0,0.1);
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.clay-button-primary:active {
+  transform: scale(0.95);
+  box-shadow: 0 5px 10px rgba(0,0,0,0.1), inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.2);
+}
+
+.cloud {
+  position: absolute;
+  background: white;
+  border-radius: 999px;
+  opacity: 0.6;
+  filter: blur(20px);
+  z-index: -1;
+}
+
+.bubble-tail {
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+@keyframes pulseOpacity {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse-opacity {
+  animation: pulseOpacity 1.5s ease-in-out infinite;
+}
