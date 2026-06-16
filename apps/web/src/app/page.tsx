@@ -272,6 +272,7 @@ export default function Home() {
   // Claim state
   const [claimStatus, setClaimStatus] = useState<"idle" | "claiming" | "claimed">("idle");
   const [txHash, setTxHash] = useState("");
+  const [rewardAmount, setRewardAmount] = useState("0.005");
 
   const rewardRef = useRef<HTMLDivElement>(null);
   const { reward } = useReward(rewardRef, "coins", {
@@ -1075,7 +1076,12 @@ export default function Home() {
             <div className="w-full flex flex-col gap-3">
               {score >= 8 && (
                 <Button
-                  onClick={() => changeScreen("reward")}
+                  onClick={() => {
+                    // Generate random reward between 0.001 and 0.01
+                    const rand = (Math.random() * (0.01 - 0.001) + 0.001);
+                    setRewardAmount(rand.toFixed(3));
+                    changeScreen("reward");
+                  }}
                   className="w-full py-5 font-bold bg-[#675f2d] hover:bg-[#4f4717] text-white rounded-2xl clay-button-primary animate-bounce-slow"
                 >
                   🎁 Claim USDm Reward!
@@ -1109,7 +1115,7 @@ export default function Home() {
                 </p>
                 <div className="bg-[#fcf1f1] p-5 rounded-2xl border-2 border-white mb-4">
                   <p className="text-xs text-[#81515a] font-bold">REWARD AMOUNT</p>
-                  <p className="text-3xl font-bold text-[#81515a] mt-1">0.01 USDm</p>
+                  <p className="text-3xl font-bold text-[#81515a] mt-1">{rewardAmount} USDm</p>
                 </div>
                 <p className="text-[11px] text-slate-500 mb-4 italic leading-relaxed">
                   Note: You can swap your USDm to USDT/USDC using MiniPay Pockets.
