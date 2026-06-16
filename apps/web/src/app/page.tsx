@@ -244,20 +244,54 @@ export default function Home() {
     if (!mounted) return;
 
     const saved = localStorage.getItem(storageKey);
+    let dataToLoad: any = null;
+
     if (saved) {
       try {
-        const data = JSON.parse(saved);
-        setStars(typeof data.stars === 'number' ? data.stars : 50);
-        setHighScore(typeof data.highScore === 'number' ? data.highScore : 0);
-        setTotalGames(typeof data.totalGames === 'number' ? data.totalGames : 0);
-        setStreakDays(typeof data.streakDays === 'number' ? data.streakDays : 1);
-        setUnlockedSkins(Array.isArray(data.unlockedSkins) ? data.unlockedSkins : ["default"]);
-        setSelectedSkin(typeof data.selectedSkin === 'string' ? data.selectedSkin : "default");
+        dataToLoad = JSON.parse(saved);
       } catch (e) {
         console.error("Failed to parse game data from localStorage", e);
       }
+    } else if (currentAddressKey !== "guest") {
+      // Migrate guest progress if it exists and wallet has no prior data
+      const guestSaved = localStorage.getItem("reflexia_game_data_guest");
+      if (guestSaved) {
+        try {
+          dataToLoad = JSON.parse(guestSaved);
+          console.log("Migrated guest progress to wallet:", currentAddressKey);
+        } catch (e) {
+          console.error("Failed to parse guest data for migration", e);
+        }
+      }
+    }
+
+    if (dataToLoad) {
+      setStars(typeof dataToLoad.stars === 'number' ? dataToLoad.stars : 50);
+      setHighScore(typeof dataToLoad.highScore === 'number' ? dataToLoad.highScore : 0);
+      setTotalGames(typeof dataToLoad.totalGames === 'number' ? dataToLoad.totalGames : 0);
+      
+      // Update streakDays on daily login check
+      const todayStr = new Date().toDateString();
+      const lastLogin = dataToLoad.lastLoginDate;
+      let calculatedStreak = typeof dataToLoad.streakDays === 'number' ? dataToLoad.streakDays : 1;
+      
+      if (lastLogin && lastLogin !== todayStr) {
+        const lastDate = new Date(lastLogin);
+        const todayDate = new Date(todayStr);
+        const diffTime = Math.abs(todayDate.getTime() - lastDate.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 1) {
+          calculatedStreak += 1;
+        } else if (diffDays > 1) {
+          calculatedStreak = 1;
+        }
+      }
+      setStreakDays(calculatedStreak);
+      setUnlockedSkins(Array.isArray(dataToLoad.unlockedSkins) ? dataToLoad.unlockedSkins : ["default"]);
+      setSelectedSkin(typeof dataToLoad.selectedSkin === 'string' ? dataToLoad.selectedSkin : "default");
     } else {
-      // Reset to defaults if no saved data for this address
+      // Reset to defaults if no saved data for this address or guest
       setStars(50);
       setHighScore(0);
       setTotalGames(0);
@@ -279,6 +313,7 @@ export default function Home() {
       streakDays,
       unlockedSkins,
       selectedSkin,
+      lastLoginDate: new Date().toDateString(),
     };
     localStorage.setItem(storageKey, JSON.stringify(data));
   }, [stars, highScore, totalGames, streakDays, unlockedSkins, selectedSkin, storageKey, mounted, loadedAddress, currentAddressKey]);
@@ -708,11 +743,8 @@ export default function Home() {
     setTotalGames((prev) => prev + 1);
     setHighScore((prev) => (score > prev ? score : prev));
 
-    // Calculate stars reward
-    let rewardStars = 0;
-    if (score >= 5 && score <= 7) rewardStars = 5;
-    else if (score >= 8 && score <= 10) rewardStars = 15;
-    else if (score > 10) rewardStars = 30;
+    // Calculate stars reward matching the UI (+15 for score 5-7, +30 for score >= 8)
+    const rewardStars = score >= 5 ? (score >= 8 ? 30 : 15) : 0;
 
     setStars((prev) => prev + rewardStars);
     setActiveScreen("result");
@@ -1354,18 +1386,27 @@ export default function Home() {
                 },
               ]
                 .sort((a, b) => b.score - a.score)
-                .map((user, idx) => (
-                  <div
-                    key={idx}
-                    className="p-3 bg-slate-50 rounded-2xl flex justify-between items-center text-sm border border-slate-100"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="font-bold text-[#81515a] w-5">#{idx + 1}</span>
-                      <span className="font-semibold text-slate-700 font-mono">{user.name}</span>
+                .map((user, idx) => {
+                  const isUser = user.name === "You" || (address && user.name === `${address.slice(0, 8)}...${address.slice(-6)}`);
+                  return (
+                    <div
+                      key={idx}
+                      className={`p-3 rounded-2xl flex justify-between items-center text-sm border transition-all ${
+                        isUser
+                          ? "bg-[#ffd9df] border-[#ffc0cb] font-bold scale-[1.02] shadow-sm"
+                          : "bg-slate-50 border-slate-100 text-slate-700"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="font-bold text-[#81515a] w-5">#{idx + 1}</span>
+                        <span className={`font-semibold font-mono ${isUser ? "text-[#81515a]" : "text-slate-700"}`}>
+                          {user.name} {isUser && <span className="text-xs font-bold text-[#81515a]"> (You)</span>}
+                        </span>
+                      </div>
+                      <span className="font-bold text-[#81515a]">{user.score} pts</span>
                     </div>
-                    <span className="font-bold text-[#81515a]">{user.score} pts</span>
-                  </div>
-                ))}
+                  );
+                })}
             </div>
 
             <Button
