@@ -1146,7 +1146,7 @@ export default function Home() {
                   <p className="text-xs font-bold text-[#81515a] mt-2">Claim Completed!</p>
                 </div>
 
-                <div className="bg-[#fcf1f1] p-3 rounded-xl text-left mb-6 overflow-hidden">
+                <div className="bg-[#fcf1f1] p-3 rounded-2xl text-left mb-6 overflow-hidden">
                   <p className="text-[10px] font-bold text-[#81515a] mb-1 tracking-wider">Transaction Hash</p>
                   <a
                     href={`https://celoscan.io/tx/${txHash}`}
