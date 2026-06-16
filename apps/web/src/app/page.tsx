@@ -120,14 +120,62 @@ const COOL_SENTENCES = [
 export default function Home() {
   const { address, isConnected } = useAccount();
   const [activeScreen, setActiveScreen] = useState<ScreenType>("splash");
-  const [stars, setStars] = useState(1250);
+  const [stars, setStars] = useState(50);
   const [highScore, setHighScore] = useState(0);
   const [totalGames, setTotalGames] = useState(0);
   const [streakDays, setStreakDays] = useState(1);
   const [unlockedSkins, setUnlockedSkins] = useState<string[]>(["default"]);
   const [selectedSkin, setSelectedSkin] = useState<string>("default");
   const [mounted, setMounted] = useState(false);
+  const [loadedAddress, setLoadedAddress] = useState<string | null>(null);
   const [mascotEmoji, setMascotEmoji] = useState("🐹");
+
+  const currentAddressKey = address || "guest";
+  const storageKey = `reflexia_game_data_${currentAddressKey}`;
+
+  // Load state from localStorage on mount and when address changes
+  useEffect(() => {
+    if (!mounted) return;
+
+    const saved = localStorage.getItem(storageKey);
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        setStars(typeof data.stars === 'number' ? data.stars : 50);
+        setHighScore(typeof data.highScore === 'number' ? data.highScore : 0);
+        setTotalGames(typeof data.totalGames === 'number' ? data.totalGames : 0);
+        setStreakDays(typeof data.streakDays === 'number' ? data.streakDays : 1);
+        setUnlockedSkins(Array.isArray(data.unlockedSkins) ? data.unlockedSkins : ["default"]);
+        setSelectedSkin(typeof data.selectedSkin === 'string' ? data.selectedSkin : "default");
+      } catch (e) {
+        console.error("Failed to parse game data from localStorage", e);
+      }
+    } else {
+      // Reset to defaults if no saved data for this address
+      setStars(50);
+      setHighScore(0);
+      setTotalGames(0);
+      setStreakDays(1);
+      setUnlockedSkins(["default"]);
+      setSelectedSkin("default");
+    }
+    setLoadedAddress(currentAddressKey);
+  }, [address, mounted, storageKey, currentAddressKey]);
+
+  // Save state to localStorage whenever state changes (only if it matches the currently loaded address)
+  useEffect(() => {
+    if (!mounted || loadedAddress !== currentAddressKey) return;
+
+    const data = {
+      stars,
+      highScore,
+      totalGames,
+      streakDays,
+      unlockedSkins,
+      selectedSkin,
+    };
+    localStorage.setItem(storageKey, JSON.stringify(data));
+  }, [stars, highScore, totalGames, streakDays, unlockedSkins, selectedSkin, storageKey, mounted, loadedAddress, currentAddressKey]);
   const [bubbleText, setBubbleText] = useState("Let's test your reflex! ⚡");
 
   // Game state
