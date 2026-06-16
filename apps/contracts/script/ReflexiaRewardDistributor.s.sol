@@ -1,29 +1,46 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {Script} from "forge-std/Script.sol";
+import {Script, console2} from "forge-std/Script.sol";
 import {ReflexiaRewardDistributor} from "../src/ReflexiaRewardDistributor.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+contract MockERC20 is ERC20 {
+    constructor() ERC20("Mock USDm", "USDm") {
+        _mint(msg.sender, 1_000_000 * 10**18);
+    }
+}
 
 contract DeployReflexiaRewardDistributor is Script {
     function run() external {
-        uint256 deployerPrivateKey = vm.envOr("PRIVATE_KEY", uint256(0xA11CE));
-        
-        // Target settings (replace or load from env)
-        address tokenAddress = vm.envOr("USDM_TOKEN_ADDRESS", address(0x1)); 
-        address signerAddress = vm.envOr("SIGNER_ADDRESS", address(0x2));
+        uint256 deployerPrivateKey = vm.envOr("PRIVATE_KEY", uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80));
+        address deployer = vm.addr(deployerPrivateKey);
+
+        vm.startBroadcast(deployerPrivateKey);
+
+        // Deploy Mock USDm Token
+        MockERC20 token = new MockERC20();
+        console2.log("Mock USDm deployed at:", address(token));
+
+        // Use the first account as signer
+        address signerAddress = vm.envOr("SIGNER_ADDRESS", deployer);
+        console2.log("Signer address set to:", signerAddress);
         
         // Limits
         uint256 maxDailyPayoutPerUser = 100 * 10**18; // 100 USDm
         uint256 maxTotalPayout = 10000 * 10**18; // 10,000 USDm
 
-        vm.startBroadcast(deployerPrivateKey);
-
-        new ReflexiaRewardDistributor(
-            tokenAddress,
+        ReflexiaRewardDistributor distributor = new ReflexiaRewardDistributor(
+            address(token),
             signerAddress,
             maxDailyPayoutPerUser,
             maxTotalPayout
         );
+        console2.log("Distributor deployed at:", address(distributor));
+
+        // Fund the distributor with some USDm
+        token.transfer(address(distributor), 10000 * 10**18);
+        console2.log("Funded distributor with 10,000 USDm");
 
         vm.stopBroadcast();
     }

@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { useAccount } from "wagmi";
+import { useAccount, useWriteContract } from "wagmi";
 import { useReward } from "partycles";
+import { WalletConnectButton } from "@/components/connect-button";
 
 // Sound effects using Web Audio API
 const playSound = (type: "start" | "tap" | "fail" | "win" | "click" | "spin" | "spin-tick") => {
@@ -167,8 +168,25 @@ const COOL_SENTENCES = [
   "Beat the high score! 🔥"
 ];
 
+const DISTRIBUTOR_ABI = [
+  {
+    inputs: [
+      { name: "recipient", type: "address" },
+      { name: "amount", type: "uint256" },
+      { name: "nonce", type: "uint256" },
+      { name: "expiresAt", type: "uint256" },
+      { name: "signature", type: "bytes" },
+    ],
+    name: "claim",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+] as const;
+
 export default function Home() {
   const { address, isConnected } = useAccount();
+  const { writeContractAsync } = useWriteContract();
   const [activeScreen, setActiveScreen] = useState<ScreenType>("splash");
   const [stars, setStars] = useState(50);
   const [highScore, setHighScore] = useState(0);
@@ -682,18 +700,60 @@ export default function Home() {
     }
   };
 
-  // Mock blockchain reward claim
-  const handleClaimUSDm = () => {
-    if (score < 8) return;
+  // Smart contract blockchain reward claim
+  const handleClaimUSDm = async () => {
+    if (score < 8 || !address) return;
     playSound("click");
     setClaimStatus("claiming");
 
-    // Simulate blockchain confirmation
-    setTimeout(() => {
+    try {
+      // 1. Request signed voucher from local API route
+      const response = await fetch("/api/claim", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          recipient: address,
+          score,
+        }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || "Failed to generate claim signature");
+      }
+
+      const claimData = await response.json();
+
+      // 2. Call the claim function on the smart contract
+      const contractAddress = process.env.NEXT_PUBLIC_DISTRIBUTOR_ADDRESS as `0x${string}`;
+      if (!contractAddress) {
+        throw new Error("Contract address is not configured");
+      }
+
+      const hash = await writeContractAsync({
+        address: contractAddress,
+        abi: DISTRIBUTOR_ABI,
+        functionName: "claim",
+        args: [
+          claimData.recipient as `0x${string}`,
+          BigInt(claimData.amount),
+          BigInt(claimData.nonce),
+          BigInt(claimData.expiresAt),
+          claimData.signature as `0x${string}`,
+        ],
+      });
+
+      setTxHash(hash);
       setClaimStatus("claimed");
-      setTxHash("0x" + Array.from({ length: 40 }, () => Math.floor(Math.random() * 16).toString(16)).join(""));
       playSound("win");
-    }, 3000);
+    } catch (err: any) {
+      console.error("Claim error:", err);
+      setClaimStatus("idle");
+      playSound("fail");
+      alert(err.message || "Something went wrong while claiming!");
+    }
   };
 
   return (
@@ -1081,9 +1141,8 @@ export default function Home() {
               {score >= 8 && (
                 <Button
                   onClick={() => {
-                    // Generate random reward between 0.001 and 0.01
-                    const rand = (Math.random() * (0.01 - 0.001) + 0.001);
-                    setRewardAmount(rand.toFixed(3));
+                    const amount = score >= 8 && score <= 10 ? 15 : score > 10 ? 30 : 0;
+                    setRewardAmount(amount.toString());
                     changeScreen("reward");
                   }}
                   className="w-full py-5 font-bold bg-[#675f2d] hover:bg-[#4f4717] text-white rounded-2xl clay-button-primary animate-bounce-slow"
@@ -1124,12 +1183,21 @@ export default function Home() {
                 <p className="text-[11px] text-slate-500 mb-4 italic leading-relaxed">
                   Note: You can swap your USDm to USDT/USDC using MiniPay Pockets.
                 </p>
-                <Button
-                  onClick={handleClaimUSDm}
-                  className="w-full py-5 font-bold bg-[#81515a] hover:bg-[#663a43] text-white rounded-2xl clay-button-primary"
-                >
-                  Claim Reward Now! 🎁
-                </Button>
+                {mounted && isConnected ? (
+                  <Button
+                    onClick={handleClaimUSDm}
+                    className="w-full py-5 font-bold bg-[#81515a] hover:bg-[#663a43] text-white rounded-2xl clay-button-primary"
+                  >
+                    Claim Reward Now! 🎁
+                  </Button>
+                ) : (
+                  <div className="flex flex-col items-center gap-3">
+                    <p className="text-xs text-red-500 font-semibold">Please connect your Celo wallet to claim your reward.</p>
+                    <div className="w-full flex justify-center">
+                      <WalletConnectButton />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
