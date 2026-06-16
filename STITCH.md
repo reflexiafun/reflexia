@@ -1,12 +1,12 @@
-# Lucky Reflex - Design & Implementation Prompt for Stitch
+# Reflexia - Design & Implementation Prompt for Stitch
 
-This document defines the comprehensive frontend prompt and design specification for **Lucky Reflex**, a cute kids-themed reflex game, formatted for direct consumption by Stitch / Frontend Generator tools.
+This document defines the comprehensive frontend prompt and design specification for **Reflexia**, a cute pastel-themed casual reflex and reward game, formatted for direct consumption by Stitch / Frontend Generator tools.
 
 ---
 
 ## 1. System Prompt & Instructions for Stitch
 
-You are tasked with building the frontend for **Lucky Reflex**, a cute, fast-paced reflex mini-game for casual mobile/web browsers. The theme is **"Cute Kids"**—visuals must be soft, colorful, rounded, bouncy, and highly interactive.
+You are tasked with building the frontend for **Reflexia**, a cute, fast-paced reflex mini-game for casual mobile/web browsers. The theme is **"Cute Pastel / Web3 Casual"**—visuals must be soft, colorful, rounded, bouncy, and highly interactive.
 
 ### 🏛️ Architecture & Setup
 - **Core Technology**: Single-page interactive application built using HTML5, CSS3, and modern ES6 JavaScript.
@@ -48,7 +48,7 @@ Use these design rules strictly to ensure a premium, unified aesthetic:
 ### 📱 1. Splash / Loading Screen
 *   **Layout**: Centered cute cloud layout with a mascot (a sleeping baby star or smiley bunny).
 *   **Components**:
-    *   Logo: **Lucky Reflex** written in colorful, bouncy, bubble-style typography.
+    *   Logo: **Reflexia** written in colorful, bouncy, bubble-style typography.
     *   Loading Bar: A track shaped like a track of clouds, filled with a pink candy bar.
     *   Status Text: *"Waking up the stars..."*, *"Polishing the cloud steps..."*
 *   **Logic**: Auto-transition to the Home Screen after 2.5 seconds (or once assets are loaded).

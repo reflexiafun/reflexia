@@ -11,7 +11,7 @@ const quicksand = Quicksand({
 });
 
 export const metadata: Metadata = {
-  title: 'Lucky Reflex - Cute Kids Game',
+  title: 'Reflexia - Casual Reflex & Reward Game',
   description: 'Challenge your reflexes with cute targets and earn rewards on Celo blockchain!',
   icons: {
     icon: '/favicon.ico',

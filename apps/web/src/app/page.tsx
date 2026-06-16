@@ -86,7 +86,7 @@ interface Target {
 }
 
 const SKIN_THEMES = [
-  { id: "default", name: "Cute Kids ⭐", price: 0, emojis: ["⭐", "☁️", "🎈", "🐰", "🐥"] },
+  { id: "default", name: "Cute Pastel ⭐", price: 0, emojis: ["⭐", "☁️", "🎈", "🐰", "🐥"] },
   { id: "candy", name: "Candy Party 🍭", price: 100, emojis: ["🍭", "🍬", "🍩", "🧁", "🍫"] },
   { id: "space", name: "Cosmic Baby 🚀", price: 250, emojis: ["🚀", "🪐", "🛸", "☄️", "👾"] },
   { id: "animal", name: "Safari Friends 🦁", price: 500, emojis: ["🦁", "🐼", "🐨", "🐸", "🦊"] },
@@ -342,11 +342,9 @@ export default function Home() {
         {/* SPLASH SCREEN */}
         {activeScreen === "splash" && (
           <div className="flex flex-col items-center text-center">
-            <div className="w-48 h-48 bg-[#ffd9df] border-4 border-white rounded-full flex items-center justify-center shadow-[0_15px_30px_rgba(0,0,0,0.08)] mb-8 animate-wiggle p-4 overflow-hidden">
-              <img src="/logo.png" alt="Lucky Reflex Logo" className="w-full h-full object-contain" />
+            <div className="w-48 h-48 mb-8 animate-wiggle flex items-center justify-center">
+              <img src="/logo.png" alt="Reflexia Logo" className="w-full h-full object-contain" />
             </div>
-            <h1 className="text-4xl font-bold text-[#81515a] mb-2 tracking-tight">Lucky Reflex</h1>
-            <p className="text-lg text-[#514345] font-semibold mb-6">Test Your Speed & Accuracy!</p>
             {/* Premium Progress Bar with Circular Decors */}
             <div className="relative w-80 mt-8 flex justify-center items-center">
               {/* Left circular decor */}
@@ -629,7 +627,7 @@ export default function Home() {
                   onClick={handleClaimUSDT}
                   className="w-full py-5 font-bold bg-[#81515a] hover:bg-[#663a43] text-white rounded-2xl clay-button-primary"
                 >
-                  Submit Celo Transaction
+                  Claim Reward Now! 🎁
                 </Button>
               </div>
             )}

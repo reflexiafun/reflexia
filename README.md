@@ -1,4 +1,4 @@
-# lucky-reflex-app
+# reflexia-app
 
 A new Celo blockchain project
 

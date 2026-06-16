@@ -14,7 +14,7 @@ let config: any = null
 function getWagmiConfig() {
   if (!config) {
     config = getDefaultConfig({
-      appName: 'lucky-reflex-app',
+      appName: 'reflexia-app',
       projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'YOUR_PROJECT_ID',
       chains: [celo, celoSepolia],
       transports: {

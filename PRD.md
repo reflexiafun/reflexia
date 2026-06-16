@@ -1,8 +1,8 @@
-Berikut PRD untuk **Lucky Reflex** dengan tema **cute kids**. Aku bikin fokus ke desain game, UX, dan reward loop supaya langsung bisa kamu pakai buat build. [uxplanet](https://uxplanet.org/mobile-game-design-5-impressive-examples-for-ui-designers-3239e6d88a8a)
+Berikut PRD untuk **Reflexia** dengan tema **cute pastel / Web3 casual**. Aku bikin fokus ke desain game, UX, dan reward loop supaya langsung bisa kamu pakai buat build. [uxplanet](https://uxplanet.org/mobile-game-design-5-impressive-examples-for-ui-designers-3239e6d88a8a)
 
 ## 1. Ringkasan Produk
 
-Lucky Reflex adalah mini game refleks cepat yang menantang pemain untuk men-tap target lucu secepat mungkin sebelum target hilang atau berubah. Tema visualnya dibuat **cute kids**: penuh warna pastel, karakter imut, animasi lembut, dan UI yang terasa aman untuk anak-anak maupun casual player. Game ini cocok untuk sesi main singkat 10–30 detik per ronde, lalu pemain bisa dapat poin, item, atau reward kecil berbasis performa. [youtube](https://www.youtube.com/watch?v=Bt6cdA1w_no)
+Reflexia adalah mini game refleks cepat yang menantang pemain untuk men-tap target lucu secepat mungkin sebelum target hilang atau berubah. Tema visualnya dibuat **cute pastel**: penuh warna cerah lembut, karakter imut, animasi lembut, dan UI yang terasa aman untuk semua casual player. Game ini cocok untuk sesi main singkat 10–30 detik per ronde, lalu pemain bisa dapat poin, item, atau reward kecil berbasis performa. [youtube](https://www.youtube.com/watch?v=Bt6cdA1w_no)
 
 ## 2. Tujuan Produk
 
@@ -10,7 +10,7 @@ Tujuan utama game ini adalah menciptakan pengalaman refleks yang sederhana, seru
 
 ## 3. Target Pengguna
 
-Target utama adalah pemain casual mobile berusia remaja hingga dewasa muda yang suka game simple, warna cerah, dan reward instan. Karena temanya cute kids, UI harus ramah, tidak agresif, dan mudah dipahami dalam 5 detik pertama. Game juga cocok untuk pengguna yang suka mini challenge harian dan leaderboard ringan. [canva](https://www.canva.com/templates/s/game/)
+Target utama adalah pemain casual mobile berusia remaja hingga dewasa muda yang suka game simple, warna cerah, dan reward instan. Karena temanya cute pastel / Web3 casual, UI harus ramah, tidak agresif, dan mudah dipahami dalam 5 detik pertama. Game juga cocok untuk pengguna yang suka mini challenge harian dan leaderboard ringan. [canva](https://www.canva.com/templates/s/game/)
 
 ## 4. Core Gameplay
 
@@ -110,7 +110,7 @@ Game dianggap siap MVP kalau:
 - 1 ronde selesai dalam 10–30 detik.
 - UI tetap nyaman di mobile.
 - Reward terasa menarik tapi tidak mudah dieksploitasi.
-- Tema cute kids konsisten di semua screen. [uxplanet](https://uxplanet.org/mobile-game-design-5-impressive-examples-for-ui-designers-3239e6d88a8a)
+- Tema cute pastel / Web3 casual konsisten di semua screen. [uxplanet](https://uxplanet.org/mobile-game-design-5-impressive-examples-for-ui-designers-3239e6d88a8a)
 
 ## 11. Contoh Arah Copy
 
