@@ -116,17 +116,20 @@ contract ReflexiaRewardDistributorTest is Test {
         distributor.claim(user1, amount, nonce, expiresAt, signature);
     }
 
-    function test_FrontRunningPrevention() public {
+    function test_ThirdPartyRelaying() public {
         uint256 amount = 10 * 10**18;
         uint256 nonce = 1;
         uint256 expiresAt = block.timestamp + 1 hours;
 
         bytes memory signature = _getSignature(user1, amount, nonce, expiresAt, signerPrivateKey);
 
-        // User2 attempts to call claim for User1
+        uint256 balanceBefore = token.balanceOf(user1);
+
+        // User2 calls claim on behalf of User1 (relaying)
         vm.prank(user2);
-        vm.expectRevert("Caller is not the recipient");
         distributor.claim(user1, amount, nonce, expiresAt, signature);
+
+        assertEq(token.balanceOf(user1) - balanceBefore, amount);
     }
 
     function test_InvalidSignature() public {

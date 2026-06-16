@@ -84,7 +84,6 @@ contract ReflexiaRewardDistributor is Ownable, ReentrancyGuard {
         bytes calldata signature
     ) external nonReentrant {
         // Checks
-        require(recipient == msg.sender, "Caller is not the recipient");
         require(expiresAt == 0 || block.timestamp <= expiresAt, "Voucher expired");
         require(!usedNonces[nonce], "Nonce already used");
         require(totalPayouts + amount <= maxTotalPayout, "Global payout pool limit exceeded");

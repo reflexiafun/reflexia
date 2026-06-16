@@ -1,6 +1,23 @@
 import { NextResponse } from 'next/server'
 import { privateKeyToAccount } from 'viem/accounts'
-import { keccak256, encodePacked } from 'viem'
+import { keccak256, encodePacked, createWalletClient, createPublicClient, http } from 'viem'
+import { celo } from 'viem/chains'
+
+const DISTRIBUTOR_ABI = [
+  {
+    inputs: [
+      { name: "recipient", type: "address" },
+      { name: "amount", type: "uint256" },
+      { name: "nonce", type: "uint256" },
+      { name: "expiresAt", type: "uint256" },
+      { name: "signature", type: "bytes" },
+    ],
+    name: "claim",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+] as const;
 
 export async function POST(request: Request) {
   try {
@@ -56,15 +73,42 @@ export async function POST(request: Request) {
       message: { raw: messageHash }
     })
 
+    // Create wallet and public clients to submit transaction to Celo
+    const rpcUrl = process.env.CELO_RPC_URL || 'https://forno.celo.org';
+    const walletClient = createWalletClient({
+      account,
+      chain: celo,
+      transport: http(rpcUrl)
+    })
+
+    const publicClient = createPublicClient({
+      chain: celo,
+      transport: http(rpcUrl)
+    })
+
+    // Submit claim transaction on-chain (backend pays the gas fee)
+    const hash = await walletClient.writeContract({
+      address: contractAddress as `0x${string}`,
+      abi: DISTRIBUTOR_ABI,
+      functionName: 'claim',
+      args: [
+        recipient as `0x${string}`,
+        amount,
+        nonce,
+        expiresAt,
+        signature as `0x${string}`
+      ]
+    })
+
+    // Wait for 1 block confirmation to ensure it went through
+    await publicClient.waitForTransactionReceipt({ hash })
+
     return NextResponse.json({
-      recipient,
-      amount: amount.toString(),
-      nonce: nonce.toString(),
-      expiresAt: expiresAt.toString(),
-      signature
+      success: true,
+      transactionHash: hash
     })
   } catch (error: any) {
-    console.error('Error signing claim:', error)
+    console.error('Error processing sponsored claim:', error)
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 })
   }
 }

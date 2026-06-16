@@ -724,7 +724,7 @@ export default function Home() {
     setClaimStatus("claiming");
 
     try {
-      // 1. Request signed voucher from local API route
+      // 1. Request signed voucher and on-chain submission from backend API route
       const response = await fetch("/api/claim", {
         method: "POST",
         headers: {
@@ -738,7 +738,7 @@ export default function Home() {
       });
 
       if (!response.ok) {
-        let errMsg = "Failed to generate claim signature";
+        let errMsg = "Failed to claim reward";
         try {
           const errData = await response.json();
           errMsg = errData.error || errData.message || JSON.stringify(errData) || errMsg;
@@ -750,26 +750,7 @@ export default function Home() {
 
       const claimData = await response.json();
 
-      // 2. Call the claim function on the smart contract
-      const contractAddress = process.env.NEXT_PUBLIC_DISTRIBUTOR_ADDRESS as `0x${string}`;
-      if (!contractAddress) {
-        throw new Error("Contract address is not configured");
-      }
-
-      const hash = await writeContractAsync({
-        address: contractAddress,
-        abi: DISTRIBUTOR_ABI,
-        functionName: "claim",
-        args: [
-          claimData.recipient as `0x${string}`,
-          BigInt(claimData.amount),
-          BigInt(claimData.nonce),
-          BigInt(claimData.expiresAt),
-          claimData.signature as `0x${string}`,
-        ],
-      });
-
-      setTxHash(hash);
+      setTxHash(claimData.transactionHash);
       setClaimStatus("claimed");
       playSound("win");
     } catch (err: any) {
