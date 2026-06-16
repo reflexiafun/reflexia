@@ -354,7 +354,8 @@ export default function Home() {
   const [hasSpawnedAny, setHasSpawnedAny] = useState(false);
   const [splashProgress, setSplashProgress] = useState(0);
   const [flyingIcons, setFlyingIcons] = useState<FlyingIcon[]>([]);
-  const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
+  const [leaderboardData, setLeaderboardData] = useState<{ daily: any[]; allTime: any[] }>({ daily: [], allTime: [] });
+  const [leaderboardTab, setLeaderboardTab] = useState<"daily" | "all">("daily");
 
   // Claim state
   const [claimStatus, setClaimStatus] = useState<"idle" | "claiming" | "claimed">("idle");
@@ -1409,15 +1410,49 @@ export default function Home() {
         {/* LEADERBOARD SCREEN */}
         {activeScreen === "leaderboard" && (
           <div className="w-full bg-white p-6 rounded-3xl clay-card">
-            <h2 className="text-2xl font-bold text-[#81515a] mb-6">Daily Leaders 🏆</h2>
+            <h2 className="text-2xl font-bold text-[#81515a] mb-4 text-center">Leaderboard 🏆</h2>
 
-            <div className="flex flex-col gap-2.5 mb-6">
-              {leaderboardData.length === 0 ? (
-                <div className="text-center py-8 text-slate-400 text-sm">
-                  Loading leaderboard... 🏆
-                </div>
-              ) : (
-                leaderboardData.map((user, idx) => {
+            {/* Button Group / Tabs */}
+            <div className="flex bg-[#fff8f7] p-1.5 rounded-2xl border-2 border-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] mb-6 gap-1">
+              <button
+                onClick={() => {
+                  playSound("click");
+                  setLeaderboardTab("daily");
+                }}
+                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+                  leaderboardTab === "daily"
+                    ? "bg-[#81515a] text-white shadow-sm scale-105"
+                    : "text-[#81515a] hover:bg-slate-100"
+                }`}
+              >
+                Daily Today ⏱️
+              </button>
+              <button
+                onClick={() => {
+                  playSound("click");
+                  setLeaderboardTab("all");
+                }}
+                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+                  leaderboardTab === "all"
+                    ? "bg-[#81515a] text-white shadow-sm scale-105"
+                    : "text-[#81515a] hover:bg-slate-100"
+                }`}
+              >
+                All-Time 🔥
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-2.5 mb-6 max-h-[260px] overflow-y-auto pr-1">
+              {(() => {
+                const activeList = leaderboardTab === "daily" ? leaderboardData.daily : leaderboardData.allTime;
+                if (!activeList || activeList.length === 0) {
+                  return (
+                    <div className="text-center py-8 text-slate-400 text-sm">
+                      {leaderboardTab === "daily" ? "No scores posted today yet! 🌟" : "No scores posted yet! 🌟"}
+                    </div>
+                  );
+                }
+                return activeList.map((user, idx) => {
                   const isUser = user.address === (address || "guest");
                   return (
                     <div
@@ -1437,8 +1472,8 @@ export default function Home() {
                       <span className="font-bold text-[#81515a]">{user.score} pts</span>
                     </div>
                   );
-                })
-              )}
+                });
+              })()}
             </div>
 
             <Button

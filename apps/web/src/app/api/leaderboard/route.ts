@@ -8,15 +8,14 @@ interface LeaderboardEntry {
   address: string
   name: string
   score: number
+  date: string // YYYY-MM-DD
 }
 
-// Initial empty data if file doesn't exist
 const initialData: LeaderboardEntry[] = []
 
 function readLeaderboard(): LeaderboardEntry[] {
   try {
     if (!fs.existsSync(filePath)) {
-      // Create directory and file if they don't exist
       const dirPath = path.dirname(filePath)
       if (!fs.existsSync(dirPath)) {
         fs.mkdirSync(dirPath, { recursive: true })
@@ -46,9 +45,26 @@ function writeLeaderboard(data: LeaderboardEntry[]) {
 
 export async function GET() {
   const data = readLeaderboard()
-  // Sort by score descending
-  const sorted = [...data].sort((a, b) => b.score - a.score)
-  return NextResponse.json(sorted)
+  const todayStr = new Date().toLocaleDateString('en-CA') // YYYY-MM-DD in local time zone
+
+  // Daily: only scores from today
+  const dailyData = data.filter(entry => entry.date === todayStr)
+  const dailySorted = [...dailyData].sort((a, b) => b.score - a.score)
+
+  // All-time: highest score per address across all time
+  const allTimeMap = new Map<string, LeaderboardEntry>()
+  for (const entry of data) {
+    const existing = allTimeMap.get(entry.address)
+    if (!existing || entry.score > existing.score) {
+      allTimeMap.set(entry.address, entry)
+    }
+  }
+  const allTimeSorted = Array.from(allTimeMap.values()).sort((a, b) => b.score - a.score)
+
+  return NextResponse.json({
+    daily: dailySorted,
+    allTime: allTimeSorted
+  })
 }
 
 export async function POST(request: Request) {
@@ -60,33 +76,52 @@ export async function POST(request: Request) {
     }
 
     const data = readLeaderboard()
-    
+    const todayStr = new Date().toLocaleDateString('en-CA')
+
     // Format display name
     let displayName = 'Guest Player'
     if (address !== 'guest') {
       displayName = `${address.slice(0, 8)}...${address.slice(-6)}`
     }
 
-    const existingIndex = data.findIndex(entry => entry.address === address)
+    // Find if user already has a record for today
+    const existingIndex = data.findIndex(entry => entry.address === address && entry.date === todayStr)
 
     if (existingIndex > -1) {
-      // Only update if new score is higher
+      // Update today's score if this round is higher
       if (score > data[existingIndex].score) {
         data[existingIndex].score = score
-        data[existingIndex].name = displayName // ensure name format matches address
+        data[existingIndex].name = displayName
       }
     } else {
+      // Add new record for today
       data.push({
         address,
         name: displayName,
-        score
+        score,
+        date: todayStr
       })
     }
 
     writeLeaderboard(data)
 
-    const sorted = [...data].sort((a, b) => b.score - a.score)
-    return NextResponse.json(sorted)
+    // Return the updated data structure
+    const dailyData = data.filter(entry => entry.date === todayStr)
+    const dailySorted = [...dailyData].sort((a, b) => b.score - a.score)
+
+    const allTimeMap = new Map<string, LeaderboardEntry>()
+    for (const entry of data) {
+      const existing = allTimeMap.get(entry.address)
+      if (!existing || entry.score > existing.score) {
+        allTimeMap.set(entry.address, entry)
+      }
+    }
+    const allTimeSorted = Array.from(allTimeMap.values()).sort((a, b) => b.score - a.score)
+
+    return NextResponse.json({
+      daily: dailySorted,
+      allTime: allTimeSorted
+    })
   } catch (error: any) {
     console.error('Leaderboard post error:', error)
     return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 })
