@@ -1,0 +1,817 @@
+"use client";
+
+import React, { useState, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { useAccount } from "wagmi";
+import { useReward } from "partycles";
+
+// Sound effects using Web Audio API
+const playSound = (type: "start" | "tap" | "fail" | "win" | "click") => {
+  if (typeof window === "undefined") return;
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    const now = ctx.currentTime;
+
+    if (type === "click") {
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(600, now);
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+      osc.start(now);
+      osc.stop(now + 0.1);
+    } else if (type === "tap") {
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(400, now);
+      osc.frequency.exponentialRampToValueAtTime(800, now + 0.15);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+      osc.start(now);
+      osc.stop(now + 0.15);
+    } else if (type === "start") {
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(300, now);
+      osc.frequency.setValueAtTime(400, now + 0.1);
+      osc.frequency.setValueAtTime(600, now + 0.2);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+      osc.start(now);
+      osc.stop(now + 0.35);
+    } else if (type === "fail") {
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(150, now);
+      osc.frequency.linearRampToValueAtTime(80, now + 0.3);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+      osc.start(now);
+      osc.stop(now + 0.3);
+    } else if (type === "win") {
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(523.25, now); // C5
+      osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+      osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+      osc.frequency.setValueAtTime(1046.50, now + 0.3); // C6
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+      osc.start(now);
+      osc.stop(now + 0.5);
+    }
+  } catch (e) {
+    console.error("Audio Context failed", e);
+  }
+};
+
+type ScreenType =
+  | "splash"
+  | "home"
+  | "tutorial"
+  | "game"
+  | "result"
+  | "reward"
+  | "shop"
+  | "leaderboard"
+  | "profile";
+
+interface Target {
+  id: number;
+  x: number; // percentage
+  y: number; // percentage
+  emoji: string;
+  isFake: boolean;
+  size: number; // px
+}
+
+const SKIN_THEMES = [
+  { id: "default", name: "Cute Kids ⭐", price: 0, emojis: ["⭐", "☁️", "🎈", "🐰", "🐥"] },
+  { id: "candy", name: "Candy Party 🍭", price: 100, emojis: ["🍭", "🍬", "🍩", "🧁", "🍫"] },
+  { id: "space", name: "Cosmic Baby 🚀", price: 250, emojis: ["🚀", "🪐", "🛸", "☄️", "👾"] },
+  { id: "animal", name: "Safari Friends 🦁", price: 500, emojis: ["🦁", "🐼", "🐨", "🐸", "🦊"] },
+];
+
+const MASCOT_EMOJIS = ["🐹", "🐱", "🐶", "🦊", "🦁", "🐯", "🐻", "🐼", "🐨", "🐰", "🦄", "🐸", "🐷", "🐧", "🐥", "🐣", "🐵", "🐨", "🐺", "🐿️"];
+
+export default function Home() {
+  const { address, isConnected } = useAccount();
+  const [activeScreen, setActiveScreen] = useState<ScreenType>("splash");
+  const [stars, setStars] = useState(1250);
+  const [highScore, setHighScore] = useState(0);
+  const [totalGames, setTotalGames] = useState(0);
+  const [streakDays, setStreakDays] = useState(1);
+  const [unlockedSkins, setUnlockedSkins] = useState<string[]>(["default"]);
+  const [selectedSkin, setSelectedSkin] = useState<string>("default");
+  const [mounted, setMounted] = useState(false);
+  const [mascotEmoji, setMascotEmoji] = useState("🐹");
+
+  // Game state
+  const [score, setScore] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(15.0); // 15 seconds round
+  const [gameActive, setGameActive] = useState(false);
+  const [targets, setTargets] = useState<Target[]>([]);
+  const [showTapIndicator, setShowTapIndicator] = useState<{ x: number; y: number; text: string } | null>(null);
+  const [hasSpawnedAny, setHasSpawnedAny] = useState(false);
+  const [splashProgress, setSplashProgress] = useState(0);
+
+  // Claim state
+  const [claimStatus, setClaimStatus] = useState<"idle" | "claiming" | "claimed">("idle");
+  const [txHash, setTxHash] = useState("");
+
+  const rewardRef = useRef<HTMLDivElement>(null);
+  const { reward } = useReward(rewardRef, "coins", {
+    particleCount: 25,
+    spread: 60,
+    startVelocity: 20,
+    effects: { spin3D: true }
+  });
+
+  useEffect(() => {
+    if (claimStatus === "claimed") {
+      // Small delay to ensure the DOM element with rewardRef is rendered
+      const timer = setTimeout(() => {
+        reward();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [claimStatus, reward]);
+
+  const spawnTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const gameIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const currentTargetId = useRef(0);
+  const gameActiveRef = useRef(false);
+
+  // Auto transition from splash to home with progress bar
+  useEffect(() => {
+    if (!mounted) return;
+    if (activeScreen === "splash") {
+      setSplashProgress(0);
+      const interval = setInterval(() => {
+        setSplashProgress((prev) => {
+          if (prev >= 100) {
+            clearInterval(interval);
+            // Randomize mascot for this session
+            const randomMascot = MASCOT_EMOJIS[Math.floor(Math.random() * MASCOT_EMOJIS.length)];
+            setMascotEmoji(randomMascot);
+            setActiveScreen("home");
+            return 100;
+          }
+          return prev + 1.5; // roughly 1.3s duration
+        });
+      }, 20);
+      return () => clearInterval(interval);
+    }
+  }, [activeScreen, mounted]);
+
+  // Clean up timers on unmount
+  useEffect(() => {
+    setMounted(true);
+    return () => {
+      if (spawnTimerRef.current) clearInterval(spawnTimerRef.current);
+      if (gameIntervalRef.current) clearInterval(gameIntervalRef.current);
+    };
+  }, []);
+
+  const changeScreen = (screen: ScreenType) => {
+    playSound("click");
+    setActiveScreen(screen);
+  };
+
+  const randomizeMascot = () => {
+    playSound("click");
+    const filtered = MASCOT_EMOJIS.filter((e) => e !== mascotEmoji);
+    const randomMascot = filtered[Math.floor(Math.random() * filtered.length)];
+    setMascotEmoji(randomMascot);
+  };
+
+  const exitGame = () => {
+    playSound("click");
+    if (spawnTimerRef.current) clearInterval(spawnTimerRef.current);
+    if (gameIntervalRef.current) clearInterval(gameIntervalRef.current);
+    gameActiveRef.current = false;
+    setGameActive(false);
+    setTargets([]);
+    setActiveScreen("home");
+  };
+
+  // Start game loop
+  const startGame = () => {
+    playSound("start");
+    setScore(0);
+    setStreak(0);
+    setTimeLeft(15.0);
+    setTargets([]);
+    setHasSpawnedAny(false);
+    gameActiveRef.current = true;
+    setGameActive(true);
+    setActiveScreen("game");
+
+    // Spawn initial target
+    spawnTarget();
+
+    // Spawn timer interval (approximately every 800ms to 1200ms)
+    spawnTimerRef.current = setInterval(() => {
+      spawnTarget();
+    }, 900);
+
+    // Main clock
+    gameIntervalRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 0.1) {
+          endGame();
+          return 0;
+        }
+        return Math.round((prev - 0.1) * 10) / 10;
+      });
+    }, 100);
+  };
+
+  const spawnTarget = () => {
+    if (!gameActiveRef.current) return;
+
+    // Get current skin emojis
+    const currentTheme = SKIN_THEMES.find((t) => t.id === selectedSkin) || SKIN_THEMES[0];
+    const isFake = Math.random() < 0.25; // 25% chance of fake target
+    const randomEmoji = isFake ? "❌" : currentTheme.emojis[Math.floor(Math.random() * currentTheme.emojis.length)];
+
+    const newTarget: Target = {
+      id: currentTargetId.current++,
+      x: Math.max(10, Math.min(80, Math.random() * 90)),
+      y: Math.max(10, Math.min(80, Math.random() * 90)),
+      emoji: randomEmoji,
+      isFake,
+      size: Math.floor(Math.random() * 20) + 60, // 60px to 80px size
+    };
+
+    setTargets((prev) => [...prev, newTarget]);
+    setHasSpawnedAny(true);
+
+    // Automatically remove target after 1.5 seconds if not clicked
+    setTimeout(() => {
+      setTargets((prev) => prev.filter((t) => t.id !== newTarget.id));
+    }, 1500);
+  };
+
+  const handleTargetTap = (target: Target, clickX: number, clickY: number) => {
+    if (!gameActiveRef.current) return;
+
+    if (target.isFake) {
+      // Tapped a fake target! Penalize
+      playSound("fail");
+      setScore((prev) => Math.max(0, prev - 2));
+      setStreak(0);
+      setShowTapIndicator({ x: clickX, y: clickY, text: "-2 ❌ Oops!" });
+    } else {
+      // Good tap
+      playSound("tap");
+      const addedPoints = 1 + Math.floor(streak / 5);
+      setScore((prev) => prev + addedPoints);
+      setStreak((prev) => prev + 1);
+      setShowTapIndicator({ x: clickX, y: clickY, text: `+${addedPoints} Streak! 🔥` });
+    }
+
+    // Remove tapped target
+    setTargets((prev) => prev.filter((t) => t.id !== target.id));
+
+    // Clear indicator after 600ms
+    setTimeout(() => {
+      setShowTapIndicator(null);
+    }, 600);
+  };
+
+  const endGame = () => {
+    if (spawnTimerRef.current) clearInterval(spawnTimerRef.current);
+    if (gameIntervalRef.current) clearInterval(gameIntervalRef.current);
+    gameActiveRef.current = false;
+    setGameActive(false);
+    playSound("win");
+
+    setTotalGames((prev) => prev + 1);
+    setHighScore((prev) => (score > prev ? score : prev));
+
+    // Calculate stars reward
+    let rewardStars = 0;
+    if (score >= 5 && score <= 7) rewardStars = 5;
+    else if (score >= 8 && score <= 10) rewardStars = 15;
+    else if (score > 10) rewardStars = 30;
+
+    setStars((prev) => prev + rewardStars);
+    setActiveScreen("result");
+  };
+
+  // Buy Skin
+  const buySkin = (skinId: string, price: number) => {
+    if (stars >= price && !unlockedSkins.includes(skinId)) {
+      setStars((prev) => prev - price);
+      setUnlockedSkins((prev) => [...prev, skinId]);
+      setSelectedSkin(skinId);
+      playSound("win");
+    } else if (unlockedSkins.includes(skinId)) {
+      setSelectedSkin(skinId);
+      playSound("click");
+    } else {
+      playSound("fail");
+    }
+  };
+
+  // Mock blockchain reward claim
+  const handleClaimUSDT = () => {
+    if (score < 8) return;
+    playSound("click");
+    setClaimStatus("claiming");
+
+    // Simulate blockchain confirmation
+    setTimeout(() => {
+      setClaimStatus("claimed");
+      setTxHash("0x" + Array.from({ length: 40 }, () => Math.floor(Math.random() * 16).toString(16)).join(""));
+      playSound("win");
+    }, 3000);
+  };
+
+  return (
+    <div className="flex-grow w-full max-w-[450px] mx-auto min-h-[calc(100vh-64px)] flex flex-col items-center justify-center p-6 relative overflow-hidden bg-[#fff8f7]">
+      {/* Background clouds (Atmosphere) */}
+      <div className="cloud w-64 h-32 top-20 -left-10 animate-float" style={{ animationDelay: "0s" }}></div>
+      <div className="cloud w-48 h-24 top-60 -right-20 animate-float" style={{ animationDelay: "1s" }}></div>
+      <div className="cloud w-80 h-40 bottom-20 left-1/2 -translate-x-1/2 animate-float" style={{ animationDelay: "2s" }}></div>
+
+      {/* Screen Container */}
+      <div className="w-full flex flex-col items-center">
+        {/* SPLASH SCREEN */}
+        {activeScreen === "splash" && (
+          <div className="flex flex-col items-center text-center">
+            <div className="w-48 h-48 bg-[#ffd9df] border-4 border-white rounded-full flex items-center justify-center shadow-[0_15px_30px_rgba(0,0,0,0.08)] mb-8 animate-wiggle p-4 overflow-hidden">
+              <img src="/logo.png" alt="Lucky Reflex Logo" className="w-full h-full object-contain" />
+            </div>
+            <h1 className="text-4xl font-bold text-[#81515a] mb-2 tracking-tight">Lucky Reflex</h1>
+            <p className="text-lg text-[#514345] font-semibold mb-6">Test Your Speed & Accuracy!</p>
+            {/* Premium Progress Bar with Circular Decors */}
+            <div className="relative w-80 mt-8 flex justify-center items-center">
+              {/* Left circular decor */}
+              <div className="absolute -left-3 w-8 h-8 rounded-full bg-white shadow-[0_4px_8px_rgba(0,0,0,0.05)] border-2 border-white z-0 flex items-center justify-center text-xs animate-pulse opacity-60">
+                ✨
+              </div>
+              {/* Bottom circular decor */}
+              <div className="absolute -bottom-4 left-1/4 w-6 h-6 rounded-full bg-white shadow-[0_4px_8px_rgba(0,0,0,0.05)] border-2 border-white z-0 animate-bounce" style={{ animationDuration: '4s' }}></div>
+              {/* Right circular decor */}
+              <div className="absolute -right-3 w-10 h-10 rounded-full bg-white shadow-[0_4px_8px_rgba(0,0,0,0.05)] border-2 border-white z-0"></div>
+
+              {/* Main premium glossy pill bar */}
+              <div className="w-full bg-white border-[6px] border-white rounded-full p-0.5 shadow-[0_12px_24px_rgba(0,0,0,0.06),inset_0_4px_8px_rgba(0,0,0,0.05)] h-8 relative z-10 flex items-center overflow-hidden">
+                <div
+                  className="bg-[#ffd9df] border-2 border-[#ffc0cb] h-full rounded-full transition-all duration-75 relative shadow-[inset_0_4px_0_rgba(255,255,255,0.6)] animate-pulse-opacity"
+                  style={{ width: `${splashProgress}%` }}
+                >
+                  {/* Glossy top glare overlay */}
+                  <div className="absolute top-0.5 left-2 right-2 h-1 bg-white/50 rounded-full"></div>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-xs text-[#81515a] font-bold mt-8 tracking-wide animate-pulse-opacity">
+              {Math.floor(splashProgress)}% Loading...
+            </p>
+          </div>
+        )}
+
+        {/* HOME MENU */}
+        {activeScreen === "home" && (
+          <div className="w-full flex flex-col items-center">
+            {/* Top Stars & Streak bar */}
+            <div className="w-full flex justify-between gap-3 mb-6">
+              <div className="flex-1 bg-white px-4 py-2 rounded-2xl clay-card flex items-center justify-between">
+                <span className="text-[#81515a] font-bold text-sm">⭐ Stars</span>
+                <span className="text-[#81515a] font-bold text-lg">{stars}</span>
+              </div>
+              <div className="flex-1 bg-[#f0e3a4] px-4 py-2 rounded-2xl clay-card flex items-center justify-between border-2 border-white">
+                <span className="text-[#201c00] font-bold text-sm">🔥 Streak</span>
+                <span className="text-[#201c00] font-bold text-lg">{streakDays} Day</span>
+              </div>
+            </div>
+
+            {/* Mascot and speech bubble */}
+            <div className="relative mb-8 group w-full flex flex-col items-center">
+              <div className="bg-white px-5 py-3 rounded-2xl clay-card whitespace-nowrap animate-bounce mb-6 relative">
+                <span className="font-bold text-lg text-[#81515a]">Let's test your reflex! ⚡</span>
+                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-4 bg-white bubble-tail"></div>
+              </div>
+              <div 
+                onClick={randomizeMascot}
+                className="w-48 h-48 bg-[#ffd9df] rounded-full border-4 border-white flex items-center justify-center text-[115px] shadow-[0_20px_40px_rgba(0,0,0,0.06)] animate-wiggle cursor-pointer active:scale-95 transition-transform"
+              >
+                {mascotEmoji}
+              </div>
+            </div>
+
+            {/* Navigation buttons */}
+            <div className="w-full flex flex-col gap-3">
+              <Button
+                onClick={startGame}
+                className="w-full py-7 text-xl font-bold bg-[#81515a] hover:bg-[#663a43] text-white rounded-2xl clay-button-primary"
+              >
+                Play Now! 🎮
+              </Button>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  onClick={() => changeScreen("shop")}
+                  className="w-full py-5 font-bold bg-[#3a6470] hover:bg-[#214c58] text-white rounded-2xl clay-button-primary"
+                >
+                  🧸 Shop
+                </Button>
+                <Button
+                  onClick={() => changeScreen("leaderboard")}
+                  className="w-full py-5 font-bold bg-[#675f2d] hover:bg-[#4f4717] text-white rounded-2xl clay-button-primary"
+                >
+                  🏆 Leaderboard
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  onClick={() => changeScreen("profile")}
+                  className="w-full py-4 font-semibold bg-[#e2d8d8] text-[#514345] hover:bg-[#eae0e0] rounded-2xl clay-card"
+                >
+                  🐱 Profile
+                </Button>
+                <Button
+                  onClick={() => changeScreen("tutorial")}
+                  className="w-full py-4 font-semibold bg-white text-[#81515a] hover:bg-slate-50 rounded-2xl clay-card"
+                >
+                  ❓ Help
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* HELP / TUTORIAL */}
+        {activeScreen === "tutorial" && (
+          <div className="w-full bg-white p-6 rounded-3xl clay-card flex flex-col items-center">
+            <h2 className="text-2xl font-bold text-[#81515a] mb-4">How To Play 🎮</h2>
+            <div className="w-full flex flex-col gap-4 text-left text-sm text-[#514345]">
+              <div className="flex items-center gap-3 p-3 bg-green-50 rounded-2xl">
+                <span className="text-3xl">⭐</span>
+                <div>
+                  <h3 className="font-bold text-green-800">Tap Cute Targets</h3>
+                  <p className="text-xs">Tap stars, balloons, or bunnies quickly to gain points and streaks!</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-3 bg-red-50 rounded-2xl">
+                <span className="text-3xl">❌</span>
+                <div>
+                  <h3 className="font-bold text-red-800">Avoid Fake Targets</h3>
+                  <p className="text-xs">Do NOT tap the red cross targets, they reduce your points!</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-3 bg-[#fcf1f1] rounded-2xl">
+                <span className="text-3xl">⏱️</span>
+                <div>
+                  <h3 className="font-bold text-[#81515a]">Fast & Furious</h3>
+                  <p className="text-xs">You have exactly 15 seconds to tap as many targets as you can!</p>
+                </div>
+              </div>
+            </div>
+
+            <Button
+              onClick={() => changeScreen("home")}
+              className="mt-6 w-full py-4 font-bold bg-[#81515a] text-white rounded-2xl clay-button-primary"
+            >
+              Back to Menu
+            </Button>
+          </div>
+        )}
+
+        {/* ACTIVE GAME SCREEN */}
+        {activeScreen === "game" && (
+          <div className="w-full flex flex-col items-center">
+            {/* Header bar (Score & timer) */}
+            <div className="w-full flex justify-between items-center mb-4 px-2">
+              <div className="text-left">
+                <p className="text-xs font-semibold text-[#514345]">SCORE</p>
+                <p className="text-2xl font-bold text-[#81515a]">{score}</p>
+              </div>
+              <div className="text-center bg-white px-3 py-1 rounded-xl clay-card">
+                <p className="text-[10px] font-bold text-[#3a6470]">STREAK</p>
+                <p className="text-lg font-bold text-[#3a6470]">{streak} 🔥</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs font-semibold text-[#514345]">TIME LEFT</p>
+                <p className="text-2xl font-bold text-[#81515a]">{timeLeft}s</p>
+              </div>
+            </div>
+
+            {/* Time progress bar */}
+            <div className="w-full bg-[#e2d8d8] h-4 rounded-full overflow-hidden border-2 border-white mb-6">
+              <div
+                className="bg-[#81515a] h-full transition-all duration-100"
+                style={{ width: `${(timeLeft / 15.0) * 100}%` }}
+              ></div>
+            </div>
+
+            {/* Spawning Canvas Container */}
+            <div className="w-full h-[350px] bg-white rounded-3xl clay-card relative overflow-hidden border-4 border-white shadow-inner select-none">
+              {/* Tap feedback indicator */}
+              {showTapIndicator && (
+                <div
+                  className="text-nowrap absolute pointer-events-none transform -translate-x-1/2 -translate-y-1/2 animate-bounce z-50 bg-[#ffc0cb] border-2 border-white text-xs font-bold text-[#81515a] px-3 py-1.5 rounded-full shadow-lg"
+                  style={{ left: `${showTapIndicator.x}%`, top: `${showTapIndicator.y}%` }}
+                >
+                  {showTapIndicator.text}
+                </div>
+              )}
+
+              {/* Spawned targets */}
+              {targets.map((target) => (
+                <button
+                  key={target.id}
+                  onClick={(e) => {
+                    const rect = e.currentTarget.parentElement?.getBoundingClientRect();
+                    if (rect) {
+                      const tapX = ((e.clientX - rect.left) / rect.width) * 100;
+                      const tapY = ((e.clientY - rect.top) / rect.height) * 100;
+                      handleTargetTap(target, tapX, tapY);
+                    }
+                  }}
+                  className="absolute transform -translate-x-1/2 -translate-y-1/2 active:scale-95 transition-transform duration-75 flex items-center justify-center"
+                  style={{
+                    left: `${target.x}%`,
+                    top: `${target.y}%`,
+                    width: `${target.size}px`,
+                    height: `${target.size}px`,
+                    fontSize: `${target.size * 0.6}px`,
+                  }}
+                >
+                  <span className="animate-wiggle inline-block">{target.emoji}</span>
+                </button>
+              ))}
+
+              {!hasSpawnedAny && targets.length === 0 && (
+                <div className="absolute inset-0 flex items-center justify-center text-slate-300 font-semibold select-none pointer-events-none">
+                  Get ready... 🌟
+                </div>
+              )}
+            </div>
+
+            <Button
+              onClick={exitGame}
+              className="mt-6 w-full py-4 font-bold bg-[#e2d8d8] text-[#514345] hover:bg-[#eae0e0] rounded-2xl clay-card"
+            >
+              Exit Game 🚪
+            </Button>
+          </div>
+        )}
+
+        {/* RESULTS SCREEN */}
+        {activeScreen === "result" && (
+          <div className="w-full bg-white p-6 rounded-3xl clay-card flex flex-col items-center">
+            <h2 className="text-3xl font-bold text-[#81515a] mb-2">Game Over! 🏁</h2>
+            <div className="w-24 h-24 bg-[#ffd9df] rounded-full border-4 border-white flex items-center justify-center text-5xl mb-4 animate-wiggle">
+              🏆
+            </div>
+
+            <p className="text-[#514345] font-semibold text-lg mb-4">You scored:</p>
+            <p className="text-6xl font-bold text-[#81515a] mb-6">{score}</p>
+
+            {/* Stars summary */}
+            <div className="w-full bg-[#fcf1f1] p-4 rounded-2xl mb-6 flex justify-between items-center text-sm font-semibold">
+              <span className="text-[#81515a]">Stars Earned:</span>
+              <span className="text-[#81515a] text-lg font-bold">
+                +{score >= 5 ? (score >= 8 ? 30 : 15) : 0} ⭐
+              </span>
+            </div>
+
+            {/* Call to action */}
+            <div className="w-full flex flex-col gap-3">
+              {score >= 8 && (
+                <Button
+                  onClick={() => changeScreen("reward")}
+                  className="w-full py-5 font-bold bg-[#675f2d] hover:bg-[#4f4717] text-white rounded-2xl clay-button-primary animate-bounce"
+                >
+                  🎁 Claim USDT Reward!
+                </Button>
+              )}
+              <Button
+                onClick={startGame}
+                className="w-full py-5 font-bold bg-[#81515a] hover:bg-[#663a43] text-white rounded-2xl clay-button-primary"
+              >
+                Play Again
+              </Button>
+              <Button
+                onClick={() => changeScreen("home")}
+                className="w-full py-4 font-bold bg-[#e2d8d8] text-[#514345] hover:bg-[#eae0e0] rounded-2xl clay-card"
+              >
+                Main Menu
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* REWARD / CLAIM SCREEN */}
+        {activeScreen === "reward" && (
+          <div className="w-full bg-white p-6 rounded-3xl clay-card flex flex-col items-center">
+            <h2 className="text-2xl font-bold text-[#81515a] mb-4">Milestone Claim 🎁</h2>
+
+            {claimStatus === "idle" && (
+              <div className="text-center">
+                <p className="text-[#514345] text-sm mb-6">
+                  Congratulations! You achieved a score of <strong>{score}</strong>. You are eligible to claim a small reward to your connected Celo Wallet.
+                </p>
+                <div className="bg-[#fcf1f1] p-5 rounded-2xl border-2 border-white mb-6">
+                  <p className="text-xs text-[#81515a] font-bold">REWARD AMOUNT</p>
+                  <p className="text-3xl font-bold text-[#81515a] mt-1">0.10 USDT</p>
+                </div>
+                <Button
+                  onClick={handleClaimUSDT}
+                  className="w-full py-5 font-bold bg-[#81515a] hover:bg-[#663a43] text-white rounded-2xl clay-button-primary"
+                >
+                  Submit Celo Transaction
+                </Button>
+              </div>
+            )}
+
+            {claimStatus === "claiming" && (
+              <div className="text-center py-6 flex flex-col items-center">
+                <div className="w-16 h-16 border-4 border-[#81515a] border-t-transparent rounded-full animate-spin mb-6"></div>
+                <h3 className="text-lg font-bold text-[#81515a] mb-2">Processing on Celo...</h3>
+                <p className="text-xs text-[#514345]">Please wait while we process your reward transaction.</p>
+              </div>
+            )}
+
+            {claimStatus === "claimed" && (
+              <div className="text-center w-full">
+                <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
+                  ✓
+                </div>
+                <h3 className="text-xl font-bold text-green-700 mb-2">Claim Successful!</h3>
+                <p className="text-xs text-[#514345] mb-6">Your reward has been sent successfully.</p>
+
+                {/* Confetti celebration anchor */}
+                <div className="relative w-full h-[150px] rounded-2xl border-4 border-white shadow-[0_8px_16px_rgba(0,0,0,0.06),inset_0_4px_0_rgba(0,0,0,0.05)] bg-[#fff8f7] mb-6 flex flex-col items-center justify-center overflow-visible">
+                  <div ref={rewardRef} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 overflow-visible z-50" />
+                  <span className="text-6xl animate-bounce duration-1000 select-none">💰</span>
+                  <p className="text-xs font-bold text-[#81515a] mt-2">Claim Completed!</p>
+                </div>
+
+                <div className="bg-[#fcf1f1] p-3 rounded-xl text-left mb-6 overflow-hidden">
+                  <p className="text-[10px] font-bold text-[#81515a]">TRANSACTION HASH</p>
+                  <p className="text-[10px] text-slate-500 font-mono break-all select-all mt-1">{txHash}</p>
+                </div>
+
+                <Button
+                  onClick={() => {
+                    setClaimStatus("idle");
+                    changeScreen("home");
+                  }}
+                  className="w-full py-4 font-bold bg-[#81515a] text-white rounded-2xl clay-button-primary"
+                >
+                  Go Home
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* SHOP / COSMETICS SCREEN */}
+        {activeScreen === "shop" && (
+          <div className="w-full bg-white p-6 rounded-3xl clay-card">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-[#81515a]">Target Shop 🧸</h2>
+              <div className="bg-[#fcf1f1] px-3 py-1 rounded-xl border border-pink-100 text-xs font-bold text-[#81515a]">
+                ⭐ {stars}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto mb-6 pr-1">
+              {SKIN_THEMES.map((theme) => {
+                const isUnlocked = unlockedSkins.includes(theme.id);
+                const isSelected = selectedSkin === theme.id;
+
+                return (
+                  <div
+                    key={theme.id}
+                    className={`p-3 rounded-2xl border-2 flex justify-between items-center transition-all ${isSelected
+                        ? "border-[#81515a] bg-[#ffd9df]"
+                        : isUnlocked
+                          ? "border-slate-200 bg-slate-50"
+                          : "border-slate-100 bg-white"
+                      }`}
+                  >
+                    <div className="text-left">
+                      <p className="font-bold text-sm text-[#81515a]">{theme.name}</p>
+                      <p className="text-xs text-slate-400 mt-1">
+                        Emojis: {theme.emojis.slice(0, 4).join(" ")}
+                      </p>
+                    </div>
+
+                    <Button
+                      onClick={() => buySkin(theme.id, theme.price)}
+                      disabled={!isUnlocked && stars < theme.price}
+                      size="sm"
+                      className={`px-3 py-1 text-xs font-bold rounded-xl ${isSelected
+                          ? "bg-[#81515a] text-white cursor-default"
+                          : isUnlocked
+                            ? "bg-slate-200 text-slate-700 hover:bg-slate-300"
+                            : "bg-[#3a6470] text-white hover:bg-[#214c58]"
+                        }`}
+                    >
+                      {isSelected ? "Selected" : isUnlocked ? "Select" : `${theme.price} ⭐`}
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+
+            <Button
+              onClick={() => changeScreen("home")}
+              className="w-full py-4 font-bold bg-[#81515a] text-white rounded-2xl clay-button-primary"
+            >
+              Back to Menu
+            </Button>
+          </div>
+        )}
+
+        {/* LEADERBOARD SCREEN */}
+        {activeScreen === "leaderboard" && (
+          <div className="w-full bg-white p-6 rounded-3xl clay-card">
+            <h2 className="text-2xl font-bold text-[#81515a] mb-6">Daily Leaders 🏆</h2>
+
+            <div className="flex flex-col gap-2.5 mb-6">
+              {[
+                { rank: 1, name: "0x71C5...4382 🐇", score: 28 },
+                { rank: 2, name: "0xE0F7...A918 🐥", score: 25 },
+                { rank: 3, name: "0x3A5d...8C12 ⭐", score: 22 },
+                { 
+                  rank: 4, 
+                  name: mounted && isConnected && address 
+                    ? `${address.slice(0, 8)}...${address.slice(-6)}` 
+                    : "You", 
+                  score: highScore 
+                },
+              ]
+                .sort((a, b) => b.score - a.score)
+                .map((user, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3 bg-slate-50 rounded-2xl flex justify-between items-center text-sm border border-slate-100"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="font-bold text-[#81515a] w-5">#{idx + 1}</span>
+                      <span className="font-semibold text-slate-700 font-mono">{user.name}</span>
+                    </div>
+                    <span className="font-bold text-[#81515a]">{user.score} pts</span>
+                  </div>
+                ))}
+            </div>
+
+            <Button
+              onClick={() => changeScreen("home")}
+              className="w-full py-4 font-bold bg-[#81515a] text-white rounded-2xl clay-button-primary"
+            >
+              Back to Menu
+            </Button>
+          </div>
+        )}
+
+        {/* PROFILE / STATS SCREEN */}
+        {activeScreen === "profile" && (
+          <div className="w-full bg-white p-6 rounded-3xl clay-card flex flex-col items-center">
+            <h2 className="text-2xl font-bold text-[#81515a] mb-6">Player Stats 🐱</h2>
+
+            <div className="w-20 h-20 bg-[#ffc0cb] rounded-full border-4 border-white flex items-center justify-center text-4xl mb-4 animate-wiggle">
+              🐱
+            </div>
+
+            <h3 className="font-bold text-lg text-[#81515a] mb-6 font-mono break-all bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100 shadow-inner">
+              {mounted && isConnected && address
+                ? `${address.slice(0, 8)}...${address.slice(-6)}`
+                : "Guest Player"}
+            </h3>
+
+            <div className="w-full grid grid-cols-2 gap-3 mb-6 text-center">
+              <div className="bg-[#fcf1f1] p-3 rounded-2xl">
+                <p className="text-[10px] font-bold text-slate-400">HIGH SCORE</p>
+                <p className="text-xl font-bold text-[#81515a]">{highScore}</p>
+              </div>
+              <div className="bg-[#fcf1f1] p-3 rounded-2xl">
+                <p className="text-[10px] font-bold text-slate-400">TOTAL ROUNDS</p>
+                <p className="text-xl font-bold text-[#81515a]">{totalGames}</p>
+              </div>
+            </div>
+
+            <Button
+              onClick={() => changeScreen("home")}
+              className="w-full py-4 font-bold bg-[#81515a] text-white rounded-2xl clay-button-primary"
+            >
+              Back to Menu
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
