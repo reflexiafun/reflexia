@@ -354,6 +354,7 @@ export default function Home() {
   const [hasSpawnedAny, setHasSpawnedAny] = useState(false);
   const [splashProgress, setSplashProgress] = useState(0);
   const [flyingIcons, setFlyingIcons] = useState<FlyingIcon[]>([]);
+  const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
 
   // Claim state
   const [claimStatus, setClaimStatus] = useState<"idle" | "claiming" | "claimed">("idle");
@@ -426,6 +427,41 @@ export default function Home() {
     }
     setActiveScreen(screen);
   };
+
+  const fetchLeaderboard = async () => {
+    try {
+      const res = await fetch("/api/leaderboard");
+      if (res.ok) {
+        const data = await res.json();
+        setLeaderboardData(data);
+      }
+    } catch (e) {
+      console.error("Failed to fetch leaderboard", e);
+    }
+  };
+
+  const updateLeaderboard = async (gameScore: number) => {
+    try {
+      await fetch("/api/leaderboard", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          address: address || "guest",
+          score: gameScore,
+        }),
+      });
+    } catch (error) {
+      console.error("Failed to update leaderboard:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (activeScreen === "leaderboard") {
+      fetchLeaderboard();
+    }
+  }, [activeScreen]);
 
   const randomizeMascot = () => {
     playSound("click");
@@ -742,6 +778,9 @@ export default function Home() {
 
     setTotalGames((prev) => prev + 1);
     setHighScore((prev) => (score > prev ? score : prev));
+
+    // Post to leaderboard API
+    updateLeaderboard(score);
 
     // Calculate stars reward matching the UI (+15 for score 5-7, +30 for score >= 8)
     const rewardStars = score >= 5 ? (score >= 8 ? 30 : 15) : 0;
@@ -1373,21 +1412,13 @@ export default function Home() {
             <h2 className="text-2xl font-bold text-[#81515a] mb-6">Daily Leaders 🏆</h2>
 
             <div className="flex flex-col gap-2.5 mb-6">
-              {[
-                { rank: 1, name: "0x71C5...4382", score: 28 },
-                { rank: 2, name: "0xE0F7...A918", score: 25 },
-                { rank: 3, name: "0x3A5d...8C12", score: 22 },
-                {
-                  rank: 4,
-                  name: mounted && isConnected && address
-                    ? `${address.slice(0, 8)}...${address.slice(-6)}`
-                    : "You",
-                  score: highScore
-                },
-              ]
-                .sort((a, b) => b.score - a.score)
-                .map((user, idx) => {
-                  const isUser = user.name === "You" || (address && user.name === `${address.slice(0, 8)}...${address.slice(-6)}`);
+              {leaderboardData.length === 0 ? (
+                <div className="text-center py-8 text-slate-400 text-sm">
+                  Loading leaderboard... 🏆
+                </div>
+              ) : (
+                leaderboardData.map((user, idx) => {
+                  const isUser = user.address === (address || "guest");
                   return (
                     <div
                       key={idx}
@@ -1406,7 +1437,8 @@ export default function Home() {
                       <span className="font-bold text-[#81515a]">{user.score} pts</span>
                     </div>
                   );
-                })}
+                })
+              )}
             </div>
 
             <Button

@@ -1,0 +1,94 @@
+import { NextResponse } from 'next/server'
+import fs from 'fs'
+import path from 'path'
+
+const filePath = path.join(process.cwd(), 'src/app/api/leaderboard/leaderboard.json')
+
+interface LeaderboardEntry {
+  address: string
+  name: string
+  score: number
+}
+
+// Initial empty data if file doesn't exist
+const initialData: LeaderboardEntry[] = []
+
+function readLeaderboard(): LeaderboardEntry[] {
+  try {
+    if (!fs.existsSync(filePath)) {
+      // Create directory and file if they don't exist
+      const dirPath = path.dirname(filePath)
+      if (!fs.existsSync(dirPath)) {
+        fs.mkdirSync(dirPath, { recursive: true })
+      }
+      fs.writeFileSync(filePath, JSON.stringify(initialData, null, 2))
+      return initialData
+    }
+    const data = fs.readFileSync(filePath, 'utf-8')
+    return JSON.parse(data)
+  } catch (error) {
+    console.error('Error reading leaderboard file:', error)
+    return initialData
+  }
+}
+
+function writeLeaderboard(data: LeaderboardEntry[]) {
+  try {
+    const dirPath = path.dirname(filePath)
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true })
+    }
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2))
+  } catch (error) {
+    console.error('Error writing leaderboard file:', error)
+  }
+}
+
+export async function GET() {
+  const data = readLeaderboard()
+  // Sort by score descending
+  const sorted = [...data].sort((a, b) => b.score - a.score)
+  return NextResponse.json(sorted)
+}
+
+export async function POST(request: Request) {
+  try {
+    const { address, score } = await request.json()
+
+    if (!address || typeof score !== 'number') {
+      return NextResponse.json({ error: 'Missing address or score' }, { status: 400 })
+    }
+
+    const data = readLeaderboard()
+    
+    // Format display name
+    let displayName = 'Guest Player'
+    if (address !== 'guest') {
+      displayName = `${address.slice(0, 8)}...${address.slice(-6)}`
+    }
+
+    const existingIndex = data.findIndex(entry => entry.address === address)
+
+    if (existingIndex > -1) {
+      // Only update if new score is higher
+      if (score > data[existingIndex].score) {
+        data[existingIndex].score = score
+        data[existingIndex].name = displayName // ensure name format matches address
+      }
+    } else {
+      data.push({
+        address,
+        name: displayName,
+        score
+      })
+    }
+
+    writeLeaderboard(data)
+
+    const sorted = [...data].sort((a, b) => b.score - a.score)
+    return NextResponse.json(sorted)
+  } catch (error: any) {
+    console.error('Leaderboard post error:', error)
+    return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 })
+  }
+}
