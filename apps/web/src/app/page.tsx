@@ -716,6 +716,7 @@ export default function Home() {
         body: JSON.stringify({
           recipient: address,
           score,
+          amount: rewardAmount,
         }),
       });
 
@@ -1141,8 +1142,8 @@ export default function Home() {
               {score >= 8 && (
                 <Button
                   onClick={() => {
-                    const amount = score >= 8 && score <= 10 ? 15 : score > 10 ? 30 : 0;
-                    setRewardAmount(amount.toString());
+                    const rand = (Math.random() * (0.01 - 0.001) + 0.001);
+                    setRewardAmount(rand.toFixed(3));
                     changeScreen("reward");
                   }}
                   className="w-full py-5 font-bold bg-[#675f2d] hover:bg-[#4f4717] text-white rounded-2xl clay-button-primary animate-bounce-slow"

@@ -4,26 +4,22 @@ import { keccak256, encodePacked } from 'viem'
 
 export async function POST(request: Request) {
   try {
-    const { recipient, score } = await request.json()
+    const { recipient, score, amount: requestedAmount } = await request.json()
 
-    if (!recipient || !score) {
-      return NextResponse.json({ error: 'Missing recipient or score' }, { status: 400 })
+    if (!recipient || !score || !requestedAmount) {
+      return NextResponse.json({ error: 'Missing recipient, score, or amount' }, { status: 400 })
     }
 
-    // Determine the USDm amount based on the score
-    // 1 USDm = 10^18 units.
-    // score 8 to 10: 15 USDm
-    // score > 10: 30 USDm
-    let rewardAmountStr = '0';
-    if (score >= 8 && score <= 10) {
-      rewardAmountStr = (15n * 10n**18n).toString(); // 15 USDm
-    } else if (score > 10) {
-      rewardAmountStr = (30n * 10n**18n).toString(); // 30 USDm
-    } else {
+    if (score < 8) {
       return NextResponse.json({ error: 'Score is not eligible' }, { status: 400 })
     }
 
-    const amount = BigInt(rewardAmountStr);
+    const numAmount = parseFloat(requestedAmount)
+    if (isNaN(numAmount) || numAmount < 0.001 || numAmount > 0.0101) {
+      return NextResponse.json({ error: 'Invalid amount range (must be between 0.001 and 0.01 USDm)' }, { status: 400 })
+    }
+
+    const amount = BigInt(Math.floor(numAmount * 1e18));
     
     // Generate a unique nonce
     const nonce = BigInt(Math.floor(Math.random() * 1000000000));
