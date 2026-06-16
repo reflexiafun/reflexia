@@ -7,10 +7,26 @@ import { useReward } from "partycles";
 import { WalletConnectButton } from "@/components/connect-button";
 
 // Sound effects using Web Audio API
+let globalAudioCtx: AudioContext | null = null;
+
+const getAudioContext = (): AudioContext | null => {
+  if (typeof window === "undefined") return null;
+  if (!globalAudioCtx) {
+    globalAudioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+  }
+  // Resume if suspended (common on mobile browsers/webviews)
+  if (globalAudioCtx.state === "suspended") {
+    globalAudioCtx.resume().catch((err) => console.error("Failed to resume AudioContext:", err));
+  }
+  return globalAudioCtx;
+};
+
 const playSound = (type: "start" | "tap" | "fail" | "win" | "click" | "spin" | "spin-tick") => {
   if (typeof window === "undefined") return;
   try {
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
