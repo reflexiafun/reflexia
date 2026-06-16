@@ -16,6 +16,9 @@ export const metadata: Metadata = {
   icons: {
     icon: '/favicon.ico',
   },
+  other: {
+    'talentapp:project_verification': '386fea5851f51c08a3cb8a5ab24de8495724340251cda86888655df2efec98d782a74074ccc9b9903f4c29f1b3531a54c387c2c8a1571391f425d4cc0c5f2f19',
+  },
 };
 
 export default function RootLayout({
