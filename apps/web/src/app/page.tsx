@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { useAccount, useWriteContract } from "wagmi";
+import { useAccount, useWriteContract, useConnect } from "wagmi";
 import { useReward } from "partycles";
 import { WalletConnectButton } from "@/components/connect-button";
 
@@ -185,8 +185,25 @@ const DISTRIBUTOR_ABI = [
 ] as const;
 
 export default function Home() {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, isConnecting } = useAccount();
   const { writeContractAsync } = useWriteContract();
+  const { connect, connectors } = useConnect();
+
+  // Auto connect when opened in MiniPay / any Web3 injected browser
+  const autoConnectAttempted = useRef(false);
+  useEffect(() => {
+    if (typeof window !== "undefined" && !isConnected && !isConnecting && !autoConnectAttempted.current) {
+      // MiniPay or other web3 in-app browsers inject window.ethereum or window.celo
+      const isWeb3Browser = !!((window as any).ethereum || (window as any).celo || (window as any).web3);
+      if (isWeb3Browser) {
+        const injected = connectors.find((c) => c.id === "injected");
+        if (injected) {
+          autoConnectAttempted.current = true;
+          connect({ connector: injected });
+        }
+      }
+    }
+  }, [isConnected, isConnecting, connectors, connect]);
   const [activeScreen, setActiveScreen] = useState<ScreenType>("splash");
   const [stars, setStars] = useState(50);
   const [highScore, setHighScore] = useState(0);
@@ -721,8 +738,14 @@ export default function Home() {
       });
 
       if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || "Failed to generate claim signature");
+        let errMsg = "Failed to generate claim signature";
+        try {
+          const errData = await response.json();
+          errMsg = errData.error || errData.message || JSON.stringify(errData) || errMsg;
+        } catch (_) {
+          errMsg = `HTTP Error ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errMsg);
       }
 
       const claimData = await response.json();

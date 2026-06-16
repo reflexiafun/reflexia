@@ -28,10 +28,15 @@ export async function POST(request: Request) {
     const expiresAt = BigInt(Math.floor(Date.now() / 1000) + 3600);
 
     const contractAddress = process.env.NEXT_PUBLIC_DISTRIBUTOR_ADDRESS;
-    const privateKey = process.env.SIGNER_PRIVATE_KEY;
+    let privateKey = process.env.SIGNER_PRIVATE_KEY;
 
     if (!contractAddress || !privateKey) {
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
+    }
+
+    // Add 0x prefix if missing
+    if (!privateKey.startsWith('0x')) {
+      privateKey = `0x${privateKey}`;
     }
 
     const account = privateKeyToAccount(privateKey as `0x${string}`);
