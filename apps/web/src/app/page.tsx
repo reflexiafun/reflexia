@@ -225,6 +225,8 @@ export default function Home() {
   const [highScore, setHighScore] = useState(0);
   const [totalGames, setTotalGames] = useState(0);
   const [streakDays, setStreakDays] = useState(1);
+  const [leaderboardData, setLeaderboardData] = useState<{ daily: any[]; all: any[] }>({ daily: [], all: [] });
+  const [leaderboardTab, setLeaderboardTab] = useState<"daily" | "all">("daily");
   const [unlockedSkins, setUnlockedSkins] = useState<string[]>(["default"]);
   const [selectedSkin, setSelectedSkin] = useState<string>("default");
   const [mounted, setMounted] = useState(false);
@@ -274,6 +276,7 @@ export default function Home() {
       const todayStr = new Date().toDateString();
       const lastLogin = dataToLoad.lastLoginDate;
       let calculatedStreak = typeof dataToLoad.streakDays === 'number' ? dataToLoad.streakDays : 1;
+      let streakUpdated = false;
       
       if (lastLogin && lastLogin !== todayStr) {
         const lastDate = new Date(lastLogin);
@@ -283,11 +286,16 @@ export default function Home() {
         
         if (diffDays === 1) {
           calculatedStreak += 1;
+          streakUpdated = true;
         } else if (diffDays > 1) {
           calculatedStreak = 1;
+          streakUpdated = true;
         }
       }
       setStreakDays(calculatedStreak);
+      if (streakUpdated) {
+        updateLeaderboard(dataToLoad.highScore || 0, calculatedStreak);
+      }
       setUnlockedSkins(Array.isArray(dataToLoad.unlockedSkins) ? dataToLoad.unlockedSkins : ["default"]);
       setSelectedSkin(typeof dataToLoad.selectedSkin === 'string' ? dataToLoad.selectedSkin : "default");
     } else {
@@ -318,6 +326,76 @@ export default function Home() {
     localStorage.setItem(storageKey, JSON.stringify(data));
   }, [stars, highScore, totalGames, streakDays, unlockedSkins, selectedSkin, storageKey, mounted, loadedAddress, currentAddressKey]);
 
+  // Find player's record in leaderboard to sync streak and other stats
+  useEffect(() => {
+    if (!address || !leaderboardData.all || leaderboardData.all.length === 0) return;
+    const playerEntry = leaderboardData.all.find(
+      (entry) => entry.address.toLowerCase() === address.toLowerCase()
+    );
+    if (playerEntry) {
+      const dbStreak = playerEntry.streakDays || 1;
+      const dbLastLogin = playerEntry.lastLoginDate;
+      const dbScore = playerEntry.score || playerEntry.allTimeScore || 0;
+
+      const saved = localStorage.getItem(storageKey);
+      let localData: any = null;
+      if (saved) {
+        try {
+          localData = JSON.parse(saved);
+        } catch (_) {}
+      }
+
+      const todayStr = new Date().toDateString();
+      let shouldSync = false;
+      let targetStreak = streakDays;
+      let targetHighScore = highScore;
+
+      if (!localData) {
+        shouldSync = true;
+        targetStreak = dbStreak;
+        targetHighScore = dbScore;
+      } else {
+        const localLastLogin = localData.lastLoginDate;
+        if (dbLastLogin) {
+          const dbDate = new Date(dbLastLogin);
+          const localDate = localLastLogin ? new Date(localLastLogin) : new Date(0);
+          
+          if (dbDate > localDate) {
+            shouldSync = true;
+            targetStreak = dbStreak;
+          } else if (dbDate.toDateString() === localDate.toDateString()) {
+            if (dbStreak > streakDays) {
+              shouldSync = true;
+              targetStreak = dbStreak;
+            }
+          }
+        }
+        if (dbScore > highScore) {
+          shouldSync = true;
+          targetHighScore = dbScore;
+        }
+      }
+
+      if (shouldSync) {
+        setStreakDays(targetStreak);
+        setHighScore(targetHighScore);
+        const currentData = localData || {
+          stars: 50,
+          totalGames: 0,
+          unlockedSkins: ["default"],
+          selectedSkin: "default"
+        };
+        const updatedData = {
+          ...currentData,
+          streakDays: targetStreak,
+          highScore: targetHighScore,
+          lastLoginDate: dbLastLogin || todayStr,
+        };
+        localStorage.setItem(storageKey, JSON.stringify(updatedData));
+      }
+    }
+  }, [address, leaderboardData.all, storageKey]);
+
   const [bubbleText, setBubbleText] = useState("Let's test your reflex! ⚡");
   const [displayedBubbleText, setDisplayedBubbleText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -346,6 +424,19 @@ export default function Home() {
 
   // Game state
   const [score, setScore] = useState(0);
+  const scoreRef = useRef(0);
+  const updateScore = (val: number | ((prev: number) => number)) => {
+    if (typeof val === "function") {
+      setScore((prev) => {
+        const next = val(prev);
+        scoreRef.current = next;
+        return next;
+      });
+    } else {
+      setScore(val);
+      scoreRef.current = val;
+    }
+  };
   const [streak, setStreak] = useState(0);
   const [timeLeft, setTimeLeft] = useState(15.0); // 15 seconds round
   const [gameActive, setGameActive] = useState(false);
@@ -354,8 +445,7 @@ export default function Home() {
   const [hasSpawnedAny, setHasSpawnedAny] = useState(false);
   const [splashProgress, setSplashProgress] = useState(0);
   const [flyingIcons, setFlyingIcons] = useState<FlyingIcon[]>([]);
-  const [leaderboardData, setLeaderboardData] = useState<{ daily: any[]; all: any[] }>({ daily: [], all: [] });
-  const [leaderboardTab, setLeaderboardTab] = useState<"daily" | "all">("daily");
+
 
   // Claim state
   const [claimStatus, setClaimStatus] = useState<"idle" | "claiming" | "claimed">("idle");
@@ -441,7 +531,7 @@ export default function Home() {
     }
   };
 
-  const updateLeaderboard = async (gameScore: number) => {
+  async function updateLeaderboard(gameScore: number, customStreak?: number) {
     try {
       await fetch("/api/leaderboard", {
         method: "POST",
@@ -451,12 +541,17 @@ export default function Home() {
         body: JSON.stringify({
           address: address || "guest",
           score: gameScore,
+          streakDays: customStreak !== undefined ? customStreak : streakDays,
         }),
       });
     } catch (error) {
       console.error("Failed to update leaderboard:", error);
     }
-  };
+  }
+
+  useEffect(() => {
+    fetchLeaderboard();
+  }, [address]);
 
   useEffect(() => {
     if (activeScreen === "leaderboard") {
@@ -583,7 +678,7 @@ export default function Home() {
   // Start game loop
   const startGame = () => {
     playSound("start");
-    setScore(0);
+    updateScore(0);
     setStreak(0);
     setTimeLeft(15.0);
     setTargets([]);
@@ -728,7 +823,7 @@ export default function Home() {
 
     playSound("win");
     const addedPoints = 3;
-    setScore((prev) => prev + addedPoints);
+    updateScore((prev) => prev + addedPoints);
     setStreak((prev) => prev + 2); // bonus streak boost
     setShowTapIndicator({ x: clickX, y: clickY, text: `+${addedPoints} Speed Bonus! ⚡` });
 
@@ -748,14 +843,14 @@ export default function Home() {
     if (target.isFake) {
       // Tapped a fake target! Penalize
       playSound("fail");
-      setScore((prev) => Math.max(0, prev - 2));
+      updateScore((prev) => Math.max(0, prev - 2));
       setStreak(0);
       setShowTapIndicator({ x: clickX, y: clickY, text: `-2 ${target.emoji} Oops!` });
     } else {
       // Good tap
       playSound("tap");
       const addedPoints = 1 + Math.floor(streak / 5);
-      setScore((prev) => prev + addedPoints);
+      updateScore((prev) => prev + addedPoints);
       setStreak((prev) => prev + 1);
       setShowTapIndicator({ x: clickX, y: clickY, text: `+${addedPoints} Streak! 🔥` });
     }
@@ -777,14 +872,16 @@ export default function Home() {
     setGameActive(false);
     playSound("win");
 
+    const finalScore = scoreRef.current;
+
     setTotalGames((prev) => prev + 1);
-    setHighScore((prev) => (score > prev ? score : prev));
+    setHighScore((prev) => (finalScore > prev ? finalScore : prev));
 
     // Post to leaderboard API
-    updateLeaderboard(score);
+    updateLeaderboard(finalScore);
 
     // Calculate stars reward matching the UI (+15 for score 5-7, +30 for score >= 8)
-    const rewardStars = score >= 5 ? (score >= 8 ? 30 : 15) : 0;
+    const rewardStars = finalScore >= 5 ? (finalScore >= 8 ? 30 : 15) : 0;
 
     setStars((prev) => prev + rewardStars);
     setActiveScreen("result");

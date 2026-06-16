@@ -10,6 +10,8 @@ interface LeaderboardEntry {
   allTimeScore: number
   dailyScore: number
   dailyScoreDate: string
+  streakDays?: number
+  lastLoginDate?: string
 }
 
 // Initial empty data if file doesn't exist
@@ -65,7 +67,9 @@ export async function GET() {
     .map(entry => ({
       address: entry.address,
       name: entry.name,
-      score: entry.allTimeScore
+      score: entry.allTimeScore,
+      streakDays: entry.streakDays || 1,
+      lastLoginDate: entry.lastLoginDate
     }))
     .sort((a, b) => b.score - a.score)
 
@@ -74,7 +78,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { address, score } = await request.json()
+    const { address, score, streakDays } = await request.json()
 
     if (!address || typeof score !== 'number') {
       return NextResponse.json({ error: 'Missing address or score' }, { status: 400 })
@@ -108,13 +112,19 @@ export async function POST(request: Request) {
         entry.dailyScoreDate = todayStr
       }
       entry.name = displayName
+      if (typeof streakDays === 'number') {
+        entry.streakDays = streakDays
+      }
+      entry.lastLoginDate = todayStr
     } else {
       data.push({
         address,
         name: displayName,
         allTimeScore: score,
         dailyScore: score,
-        dailyScoreDate: todayStr
+        dailyScoreDate: todayStr,
+        streakDays: typeof streakDays === 'number' ? streakDays : 1,
+        lastLoginDate: todayStr
       })
     }
 
@@ -133,7 +143,9 @@ export async function POST(request: Request) {
       .map(entry => ({
         address: entry.address,
         name: entry.name,
-        score: entry.allTimeScore
+        score: entry.allTimeScore,
+        streakDays: entry.streakDays || 1,
+        lastLoginDate: entry.lastLoginDate
       }))
       .sort((a, b) => b.score - a.score)
 
