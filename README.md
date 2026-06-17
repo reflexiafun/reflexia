@@ -32,7 +32,7 @@ Reflexia is a fast-paced reflex mini-game built on Celo stablecoin rails, design
 
 ## 🔗 Deployed Contracts
 
-- **Distributor (Celo Mainnet)**: [`0x285dBd204C57F8b425d6926575FC79D818264a97`](https://celoscan.io/address/0x285dBd204C57F8b425d6926575FC79D818264a97)
+- **Distributor (Celo Mainnet)**: [`0x31232879882fD7369C6E48D98dA75cc68653ef06`](https://celoscan.io/address/0x31232879882fD7369C6E48D98dA75cc68653ef06)
 
 ---
 
