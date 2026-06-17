@@ -10,13 +10,13 @@ You are tasked with building the frontend for **Reflexia**, a cute, fast-paced r
 
 ### 🏛️ Architecture & Setup
 - **Core Technology**: Single-page interactive application built using HTML5, CSS3, and modern ES6 JavaScript.
-- **Framework Option**: Vanilla JS or Tailwind CSS (via CDN if standalone HTML). Use beautiful CSS transitions, keyframe animations, and custom utility classes.
+- **Framework Option**: Next.js, React, Tailwind CSS. Use beautiful CSS transitions, keyframe animations, and custom utility classes.
 - **Responsiveness**: Mobile-first design, optimized for portrait aspect ratio (9:16) but fully centered and responsive on desktop displays with a charming device frame or cloud-themed background.
 - **Web3 / MiniPay Integration**: 
   - Built for MiniPay on Celo stablecoin rails.
   - Micro-rewards in USDm directly to MiniPay (Celo address).
   - Users can swap their USDm to USDT/USDC using MiniPay Pockets.
-- **Persistence**: Save player progress (XP, Points, Unlocked Skins, Daily Logins, High Score) in `localStorage`.
+- **Persistence**: Save player progress (XP, Points, Unlocked Skins, Daily Rewards claimed state, High Score) in `localStorage`.
 
 ---
 
@@ -55,7 +55,7 @@ Use these design rules strictly to ensure a premium, unified aesthetic:
     *   Logo: **Reflexia** written in colorful, bouncy, bubble-style typography.
     *   Loading Bar: A track shaped like a track of clouds, filled with a pink candy bar.
     *   Status Text: *"Waking up the stars..."*, *"Polishing the cloud steps..."*
-*   **Logic**: Auto-transition to the Home Screen after 2.5 seconds (or once assets are loaded).
+*   **Logic**: Auto-transition to the Home Screen after 2.5 seconds.
 
 ### 🏠 2. Home Menu Screen
 *   **Layout**: Top bar with player stats, center mascot, bottom primary actions.
@@ -64,11 +64,11 @@ Use these design rules strictly to ensure a premium, unified aesthetic:
         *   Left: Avatar profile (small circle with mascot, level badge like "Lv. 1").
         *   Right: Points/Coins display (`⭐ 1,250`) with a shiny spin effect on update.
     *   **Center Character (Interactive Mascot)**:
-        *   A cute bunny or star that reacts with a bubble text (e.g., *"Tap me!"*, *"Let's play!"*) and plays a wiggle animation when clicked.
+        *   A cute bunny or star that reacts with a bubble text and plays a wiggle animation when clicked.
     *   **Action Buttons**:
         *   **PLAY BUTTON** (Large, bouncy, sunny yellow with "Tap to Play" icon).
         *   **SHOP BUTTON** (Lavender with shopping bag icon).
-        *   **LEADERBOARD BUTTON** (Mint green with crown icon).
+        *   **DAILY REWARDS BUTTON** (Mint green with reward box icon).
         *   **TUTORIAL BUTTON** (Info sign to trigger the overlay).
 
 ### 📖 3. Tutorial Overlay Modal
@@ -84,77 +84,53 @@ Use these design rules strictly to ensure a premium, unified aesthetic:
 *   **Components**:
     *   **HUD (Top Bar)**:
         *   Home Button (back to main menu).
-        *   Score Counter: Dynamic scaling bubble (e.g., `Score: 120`).
-        *   Timer Progress Bar: A cute pastel pink candy bar that shrinks from right to left (representing the remaining time of the round, typically 20 seconds).
+        *   Score Counter: Dynamic scaling bubble.
+        *   Timer Progress Bar: A cute pastel pink candy bar that shrinks from right to left (15 seconds).
     *   **Spawning Area (Canvas)**:
         *   A grid-less field where cute targets spawn dynamically.
-    *   **Target Types**:
-        *   **Star Target (Normal)**: Yellow star, gives +10 points. Pops and shows a tiny floaty `+10` text.
-        *   **Candy Target (Fast)**: Spawns and disappears 30% faster, gives +20 points.
-        *   **Grumpy Balloon (Decoy)**: Subtracts -15 points or breaks the current streak combo.
     *   **Combo/Streak Badge**: Shows `Streak x5` with active fire/rainbow glow particles.
 
 ### 🏆 5. Result Screen
 *   **Layout**: Banner header, score breakdown card, stars reward display, navigation buttons.
 *   **Components**:
-    *   **Star Rating**: 1, 2, or 3 cute cartoon stars lighting up one by one depending on performance.
+    *   **Star Rating**: 1, 2, or 3 cute cartoon stars lighting up.
     *   **Stats Card**: Displays Final Score, Accuracy, Max Streak, and Earned Points.
     *   **USDm Milestone / Lucky Draw Button**: If they score >= 8 targets, show a glowing *"Claim Reward Chest!"* button.
     *   **Navigation**:
         *   "Play Again" (Primary action).
         *   "Back to Home".
 
-### 🎁 6. Reward / Claim Modal
-*   **Layout**: Glowing burst background behind a magical treasure chest.
+### 🎁 6. Daily Rewards Screen
+*   **Layout**: Beautiful pastel pink grid layout showing a 7-day reward cycle.
 *   **Components**:
-    *   Animated chest (jiggles, then opens to reveal rewards).
-    *   Daily Login Reward track: A 7-day stamp grid (Day 1: +50 pts, Day 7: Secret Skin).
-    *   Claim Button: Dispatches points, updates the UI coin count, and triggers a confetti canvas animation.
+    *   7-day timeline or grid cards with pastel reward badges (USDm values and Stars).
+    *   Confetti canvas trigger upon successful claim.
+    *   Claim status tags (e.g. "Claimed ✔️", "Locked 🔒").
+    *   **Claim Today** call-to-action button, which disables to **Come back tomorrow** once claimed.
 
 ### 🛍️ 7. Shop / Cosmetics Screen
 *   **Layout**: Header bar, item grid (2x3 format), bottom character preview.
 *   **Components**:
-    *   **Preview Area**: Shows current character skin (e.g., Pink Bunny, Yellow Duck, Green Dino).
+    *   **Preview Area**: Shows current character skin.
     *   **Item Card**: Image of the skin, cost (e.g. `⭐ 500`), and status ("Buy", "Equip", "Equipped").
-
-### 👑 8. Leaderboard Screen
-*   **Layout**: Daily/Weekly tab switcher, scrolling ranking list.
-*   **Components**:
-    *   Top 3 podium: Displays 1st (Gold crown), 2nd (Silver crown), and 3rd (Bronze crown) with large avatar icons.
-    *   List Items: Rounded stripes showing rank, avatar, username, and score.
-    *   "My Rank" footer: Fixed bar showing the player's own position at the bottom.
 
 ---
 
 ## 4. Game Rules & Logic Specifications
 
-To help you build the core JavaScript game loop:
-
 1.  **Game Settings**:
-    *   Round duration: 20 seconds.
-    *   Max target lifetime: 1.8 seconds (decreases dynamically as score increases).
-    *   Max target count on screen: 2 targets simultaneously to avoid clutter.
-2.  **Target Spawning Criteria**:
-    *   Spawn coordinates must keep targets fully inside the boundaries (avoiding HUD overlay).
-    *   Spawn rate: Trigger a new target spawn whenever a target is clicked or expires.
-3.  **Streak/Combo Engine**:
-    *   Tapping correct targets consecutively increases the streak multiplier.
-    *   At streak >= 5, double the score of each tap.
-    *   Tapping an empty area or a decoy target resets the streak to 0.
-4.  **Reward Eligibility**:
+    *   Round duration: 15 seconds.
+    *   Max target lifetime: 1.5 seconds.
+2.  **Reward Eligibility**:
     *   Score 0–4: No chest reward.
-    *   Score 5–7: Tiny chest (+10 pts).
-    *   Score 8–10: Medium chest (+30 pts + chance of skin voucher).
-    *   Score > 10: Golden chest (Eligible for special sticker reward / USDm Claim simulation).
-5.  **State Management**:
-    *   `gameState`: `SPLASH` | `HOME` | `TUTORIAL` | `PLAYING` | `PAUSED` | `RESULT` | `SHOP` | `LEADERBOARD`.
-    *   Use dynamic class swapping or hidden attributes (`display: none`) to manage transitions smoothly without page reloads.
-
----
-
-## 5. Web Audio Sound Spec
-*Suggest implementing simple Web Audio synth alerts to make the game feel tactile:*
-- **Tap Success (Star)**: High-pitched bubble pop sound (`frequency: 600Hz -> 1200Hz` sweep).
-- **Tap Success (Combo)**: Ascending major triad notes.
-- **Miss/Decoy Tap**: Low buzz sound (`frequency: 180Hz -> 120Hz`).
-- **Level Up / Chest Open**: A short cheerful arpeggio (C4 -> E4 -> G4 -> C5).
+    *   Score 5–7: Tiny chest (+15 stars).
+    *   Score >= 8: Golden chest (+30 stars + eligible for USDm gameplay claim).
+3.  **Daily Rewards Logic**:
+    *   Day 1: 0.0001 USDm + 1 star
+    *   Day 2: 0.0002 USDm + 2 stars
+    *   Day 3: 0.0003 USDm + 3 stars
+    *   Day 4: 0.0005 USDm + 4 stars
+    *   Day 5: 0.0007 USDm + 5 stars
+    *   Day 6: 0.0010 USDm + 7 stars
+    *   Day 7: 0.0020 USDm + 10 stars + bonus chest
+    *   Cycle resets to Day 1 after Day 7 or if a day is missed.

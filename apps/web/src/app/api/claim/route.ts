@@ -21,19 +21,30 @@ const DISTRIBUTOR_ABI = [
 
 export async function POST(request: Request) {
   try {
-    const { recipient, score, amount: requestedAmount } = await request.json()
+    const { recipient, score, amount: requestedAmount, type } = await request.json()
 
-    if (!recipient || !score || !requestedAmount) {
-      return NextResponse.json({ error: 'Missing recipient, score, or amount' }, { status: 400 })
-    }
-
-    if (score < 8) {
-      return NextResponse.json({ error: 'Score is not eligible' }, { status: 400 })
+    if (!recipient || !requestedAmount) {
+      return NextResponse.json({ error: 'Missing recipient or amount' }, { status: 400 })
     }
 
     const numAmount = parseFloat(requestedAmount)
-    if (isNaN(numAmount) || numAmount < 0.001 || numAmount > 0.0101) {
-      return NextResponse.json({ error: 'Invalid amount range (must be between 0.001 and 0.01 USDm)' }, { status: 400 })
+    if (isNaN(numAmount)) {
+      return NextResponse.json({ error: 'Invalid amount' }, { status: 400 })
+    }
+
+    if (type === 'daily') {
+      const validDailyAmounts = [0.0001, 0.0002, 0.0003, 0.0005, 0.0007, 0.0010, 0.0020]
+      const isValidAmount = validDailyAmounts.some(val => Math.abs(val - numAmount) < 0.00001)
+      if (!isValidAmount) {
+        return NextResponse.json({ error: 'Invalid daily reward amount' }, { status: 400 })
+      }
+    } else {
+      if (score === undefined || score < 8) {
+        return NextResponse.json({ error: 'Score is not eligible or missing' }, { status: 400 })
+      }
+      if (numAmount < 0.001 || numAmount > 0.0101) {
+        return NextResponse.json({ error: 'Invalid amount range (must be between 0.001 and 0.01 USDm)' }, { status: 400 })
+      }
     }
 
     const amount = BigInt(Math.floor(numAmount * 1e18));

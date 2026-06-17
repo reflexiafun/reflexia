@@ -1,136 +1,105 @@
-Here is the PRD for **Reflexia** with a **cute pastel / Web3 casual** theme. I focused on game design, UX, and the reward loop so you can use it directly to build the game. [uxplanet](https://uxplanet.org/mobile-game-design-5-impressive-examples-for-ui-designers-3239e6d88a8a)
+# Product Requirements Document (PRD) - Reflexia (Daily Rewards Update)
 
-## 1. Product Summary
+## 1. Product Overview
+Reflexia is a fast-paced, cute, and casual mobile-first reflex game designed for the MiniPay ecosystem on the Celo network. Players tap targets, build streaks, and avoid traps in quick 15-second rounds. Reflexia features a cheerful kid-themed pastel aesthetic and integrates Web3 micropayments by offering instant USDm claims on Celo rails, paired with off-chain progression (Stars) to customize their gameplay experience.
 
-Reflexia is a fast-paced reflex mini-game that challenges players to tap correct targets as quickly as possible before they disappear or change. The visual theme is designed to be **cute pastel**: filled with soft bright colors, cute characters, gentle animations, and a UI that feels safe and welcoming for all casual players. The game is suitable for short play sessions of 10–30 seconds per round, after which players can earn points, items, or small performance-based rewards. [youtube](https://www.youtube.com/watch?v=Bt6cdA1w_no)
+---
 
-## 2. Product Objectives
+## 2. Goals
+- **Gameplay Goal**: Offer a simple, extremely responsive, and satisfying reflex challenge that anyone can pick up and enjoy within seconds.
+- **Retention Goal**: Encourage daily play through a 7-day Daily Rewards cycle, offering players incremental USDm and Star rewards.
+- **Web3 Integration Goal**: Provide sponsored (gasless) USDm micro-claims directly to Celo wallets via MiniPay.
 
-The main goal of this game is to create a simple, fun, and highly replayable reflex experience without feeling heavy or overwhelming. From a product perspective, the game must have a clear retention loop: play quickly, get a score, level up, unlock skins, and repeat. The reward system must be balanced so that prizes feel attractive but remain secure against abuse. [gamedeveloper](https://www.gamedeveloper.com/design/game-design-theory-applied-a-layered-rewards-system)
+---
 
 ## 3. Target Users
+- **Casual Mobile Users**: Players seeking quick 10–30 second entertainment loops.
+- **MiniPay Users**: Ecosystem members interested in micro-earnings and interactive stablecoin features on Celo.
+- **Hackathon MVP Audience**: Users evaluating clean, mobile-first Web3 UX design and rapid execution.
 
-The primary target audience is casual mobile players ranging from teenagers to young adults who enjoy simple games, bright colors, and instant rewards. Because of the cute pastel / Web3 casual theme, the UI must be friendly, non-aggressive, and easy to understand within the first 5 seconds. The game is also suitable for users who enjoy daily mini-challenges and light leaderboards. [canva](https://www.canva.com/templates/s/game/)
+---
 
 ## 4. Core Gameplay
+Reflexia revolves around a fast, repeatable gameplay loop:
+1. **Initiate Game**: Player taps "Play Now!" to trigger a Lucky Box Spin that reveals 3 forbidden trap emojis.
+2. **Action Phase**: For 15 seconds, cute target emojis (stars, clouds, balloons) spawn dynamically.
+3. **Reflex Challenge**: Players tap correct targets to build streak multipliers and score points. Tapping forbidden traps or missing targets breaks the streak and deducts points.
+4. **Reward Screen**: Displays final score, accuracy, stars earned, and allows claiming USDm for performance if eligibility criteria are met.
 
-Core Gameplay:
-1. The player presses the start button.
-2. Cute targets appear randomly on the screen.
-3. The player must tap the target before the time runs out.
-4. The score is calculated based on speed, accuracy, and streak.
-5. If the minimum score is reached, the player receives a reward or points. [play.google](https://play.google.com/store/apps/details?id=com.aloneaarrow.reflexpush&hl=id)
+---
 
-Examples of target variations:
-- A small smiling star.
-- Colorful clouds.
-- A chick, bunny, or candy.
-- A balloon that appears and disappears quickly.
-- Fake targets that must be avoided to add a challenge. [play.google](https://play.google.com/store/apps/details?id=com.HSGaming.Reflection&hl=hi)
+## 5. Reward System
+Reflexia combines on-chain and off-chain rewards:
+- **USDm (On-chain Stablecoin)**: The primary Web3 reward on Celo rails. Users can claim USDm directly to their MiniPay wallets. USDm is easily swappable to USDT or USDC via MiniPay Pockets.
+- **Stars (Off-chain Progression)**: Earned through regular gameplay and daily rewards. Stars serve as soft currency used to purchase cosmetic themes/skins in the in-game shop.
+- **Rationale**: On-chain rewards drive economic interest, while off-chain cosmetic progression keeps users engaged without causing a drain on the reward pool.
 
-## 5. Visual Direction
+---
 
-The visual direction should be cheerful, soft, and easy to read. Use a pastel palette such as light pink, sky blue, soft yellow, and mint, with sufficient contrast for main buttons. Element shapes should be rounded with soft shadows and small bounce animations to keep it playful. [dribbble](https://dribbble.com/search/game-ui-children)
+## 6. Daily Rewards Feature
+The Daily Rewards system replaces the global leaderboard as the primary driver of user retention. It provides a simple, zero-setup reward claim mechanism based on consecutive login days.
 
-Style guidelines:
-- Use a cute mascot character as a guide.
-- Avoid colors that are too dark or neon.
-- Use large icons and short text.
-- All main buttons must have clear affordance.
-- Animations must be smooth, not too fast or sharp. [uxplanet](https://uxplanet.org/mobile-game-design-5-impressive-examples-for-ui-designers-3239e6d88a8a)
+### 7-Day Reward Cycle
+| Day | USDm Payout | Star Payout | Special Reward |
+| :--- | :--- | :--- | :--- |
+| **Day 1** | 0.0001 USDm | 1 Star | - |
+| **Day 2** | 0.0002 USDm | 2 Stars | - |
+| **Day 3** | 0.0003 USDm | 3 Stars | - |
+| **Day 4** | 0.0005 USDm | 4 Stars | - |
+| **Day 5** | 0.0007 USDm | 5 Stars | - |
+| **Day 6** | 0.0010 USDm | 7 Stars | - |
+| **Day 7** | 0.0020 USDm | 10 Stars | Bonus Chest 🎁 |
 
-## 6. Screen List
+### Rules
+- **Frequency**: 1 claim per calendar day.
+- **Consecutive Claims**: Resets back to Day 1 after Day 7 is claimed, or if a user misses a daily claim.
 
-Main screens needed:
-- Splash / loading.
-- Home menu.
-- Short tutorial.
-- Game screen.
-- Result screen.
-- Reward / claim screen.
-- Shop / cosmetics.
-- Daily leaderboard.
-- Profile / stats. [dev](https://dev.to/ryanvanbelkum/building-a-mobile-game-using-react-native-3320)
+---
 
-## 7. UI Components
+## 7. UX / UI Changes
+- **Home Screen**: Remove the "🏆 Leaderboard" button and replace it with a prominent "🎁 Daily Rewards" or "Daily Claims" button.
+- **Daily Rewards View**: Displays a dedicated cute layout featuring:
+  - A 7-day progress timeline/grid using pastel icons.
+  - Distinct active, locked, and claimed day states.
+  - A call-to-action button: **Claim Today** (active) or **Come back tomorrow** (disabled, when claimed).
+- **Theme**: Cute kid aesthetic with pastel pinks, baby blues, rounded elements, and playful micro-animations.
 
-Core UI Components:
-- Large primary buttons with rounded corners.
-- Cute progress bar for the timer.
-- Target cards with pop animations.
-- Score bubbles for real-time points.
-- Streak badges.
-- Reward modals.
-- Mini mascot avatars.
-- Daily challenge cards. [dribbble](https://dribbble.com/search/game-ui-children)
+---
 
-Design principles:
-- Each screen must focus on a single primary action.
-- Minimize text.
-- Use a clear hierarchy: target, timer, score, then reward.
-- Feedback must be immediately visible after a correct or incorrect tap. [gamedeveloper](https://www.gamedeveloper.com/design/game-design-theory-applied-a-layered-rewards-system)
+## 8. Feature Scope
+### MVP Scope
+- 15-second core reflex gameplay mode.
+- Local high-score and total games tracking.
+- Cosmetic shop for changing game emojis using Stars.
+- 7-Day Daily Rewards claim flow (USDm and Stars).
+- Web3 sponsored wallet integration (USDm claims).
 
-## 8. Reward Design
+### Non-MVP Scope (Future Iterations)
+- Global leaderboard and competitive rankings.
+- Social sharing, invite bonuses, and friend lists.
+- Advanced wallet staking/yield DeFi integrations.
 
-The reward system should be tiered:
-- Normal play = points.
-- Reaching specific scores = bonus points.
-- Daily streaks = chest rewards.
-- Weekly leaderboard = additional rewards.
-- USDm claims only for specific milestones, not for every round. [adiccionesconductuales.som360](https://adiccionesconductuales.som360.org/en/articulo/role-video-game-design-addiction)
+---
 
-Examples:
-- Score 0–4: no reward.
-- Score 5–7: very small, points only.
-- Score 8–10: eligible for small claim.
-- 5 win streak: bonus chest.
-- 7-day login: cosmetic unlock. [gamedeveloper](https://www.gamedeveloper.com/design/game-design-theory-applied-a-layered-rewards-system)
+## 9. Smart Contract Role
+The smart contract operates purely as an on-chain reward distributor:
+- **Sponsored claims**: The distributor verifies off-chain generated vouchers (signed by the backend developer wallet) and sends USDm to the recipient address.
+- **Gasless experience**: The backend pays the gas fees to submit claims.
+- **progression limits**: User progression, Star balances, and cosmetic item unlocks remain strictly off-chain/local in the MVP.
 
-## 9. MVP Scope
-
-Most realistic MVP scope:
-- 1 reflex game mode.
-- 1 mascot.
-- 1 scoreboard.
-- 1 daily reward loop.
-- 1 simple cosmetic shop.
-- 1 light leaderboard. [dev](https://dev.to/ryanvanbelkum/building-a-mobile-game-using-react-native-3320)
-
-Not needed for MVP:
-- Multiple modes.
-- Multiple characters.
-- Complex marketplace.
-- 3D animations.
-- Overly large economy. [gamedeveloper](https://www.gamedeveloper.com/design/game-design-theory-applied-a-layered-rewards-system)
+---
 
 ## 10. Acceptance Criteria
+- Users can view and understand their Daily Reward status within seconds.
+- Day 7 reward displays a distinctive bonus chest animation/celebration.
+- The app functions entirely without dependencies on a shared ranking backend database.
+- Confetti and audio feedback triggers when claiming a daily reward.
 
-The game is considered MVP-ready if:
-- Users can understand how to play in less than 10 seconds.
-- 1 round finishes in 10–30 seconds.
-- The UI remains comfortable on mobile.
-- Rewards feel attractive but are not easy to exploit.
-- The cute pastel / Web3 casual theme is consistent across all screens. [uxplanet](https://uxplanet.org/mobile-game-design-5-impressive-examples-for-ui-designers-3239e6d88a8a)
+---
 
-## 11. Example Copy Directions
-
-Example copy tone:
-- “Tap the cute star!”
-- “Beat your reflex!”
-- “You got 8 points, nice!”
-- “Come back tomorrow for a bonus!”
-- “Unlock a new baby sticker!”  
-
-## 12. Web3 & MiniPay Integration (Celo Rails)
-
-The game is designed with the following Web3 specifications:
-- **Celo Stablecoin Rails**: All on-chain rewards use USDm as the primary stablecoin on the Celo network.
-- **UX Copy**: Players see rewards as "Dollars (USDm)" with a note explaining that the balance can be swapped to USDT or USDC via MiniPay Pockets.
-- **Smart Contract Flow**: The reward pool contains USDm, the `claimReward` function sends USDm to the user's Celo/MiniPay address, and MiniPay handles the swap to USDT/USDC if desired by the user.
-- **DeFi Disclaimer**: No staking, yield, or complex DeFi mechanisms are used, to maintain reward pool stability and prevent exploitation (sybil/abuse).
-
-## 13. Pitch to Proof of Ship (USDm Wording)
-
-> **Reflexia is a fast-paced casual game built specifically for MiniPay on Celo stablecoin rails, delivering instant micro-rewards in USDm directly to players' Celo wallets. By focusing on pure gameplay and high-retention tapping challenges, it offers a secure and abuse-resistant rewards loop free from complex DeFi mechanisms. Winners can seamlessly swap their USDm rewards to USDT or USDC via MiniPay Pockets, providing a friction-free Web3 user experience tailored for casual mobile audiences.**
-
-*(Note: Hackathon prize pool from Proof of Ship is still paid in USDT to the developer).*
+## 11. UX Copy Suggestions
+- **Tombol Daily Rewards**: `Daily Rewards` / `Daily Claim 🎁`
+- **Claim Action**: `Claim Today!`
+- **Claimed/Disabled State**: `Come back tomorrow` / `Already Claimed`
+- **Day 7 Special**: `Day 7 Bonus Chest!`
+- **Reward Confirmation**: `10 Stars earned!` / `USDm sent to your wallet!`

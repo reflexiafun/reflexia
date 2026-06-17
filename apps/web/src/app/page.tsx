@@ -107,7 +107,7 @@ type ScreenType =
   | "result"
   | "reward"
   | "shop"
-  | "leaderboard"
+  | "daily-rewards"
   | "profile"
   | "spin";
 
@@ -225,8 +225,9 @@ export default function Home() {
   const [highScore, setHighScore] = useState(0);
   const [totalGames, setTotalGames] = useState(0);
   const [streakDays, setStreakDays] = useState(1);
-  const [leaderboardData, setLeaderboardData] = useState<{ daily: any[]; all: any[] }>({ daily: [], all: [] });
-  const [leaderboardTab, setLeaderboardTab] = useState<"daily" | "all">("daily");
+  const [currentRewardDay, setCurrentRewardDay] = useState(1);
+  const [lastClaimedDate, setLastClaimedDate] = useState("");
+
   const [unlockedSkins, setUnlockedSkins] = useState<string[]>(["default"]);
   const [selectedSkin, setSelectedSkin] = useState<string>("default");
   const [mounted, setMounted] = useState(false);
@@ -276,7 +277,6 @@ export default function Home() {
       const todayStr = new Date().toDateString();
       const lastLogin = dataToLoad.lastLoginDate;
       let calculatedStreak = typeof dataToLoad.streakDays === 'number' ? dataToLoad.streakDays : 1;
-      let streakUpdated = false;
       
       if (lastLogin && lastLogin !== todayStr) {
         const lastDate = new Date(lastLogin);
@@ -286,16 +286,28 @@ export default function Home() {
         
         if (diffDays === 1) {
           calculatedStreak += 1;
-          streakUpdated = true;
         } else if (diffDays > 1) {
           calculatedStreak = 1;
-          streakUpdated = true;
         }
       }
       setStreakDays(calculatedStreak);
-      if (streakUpdated) {
-        updateLeaderboard(dataToLoad.highScore || 0, calculatedStreak);
+
+      // Setup and reset Daily Rewards cycle if missed
+      const yesterdayStr = (() => {
+        const d = new Date();
+        d.setDate(d.getDate() - 1);
+        return d.toDateString();
+      })();
+      let savedRewardDay = typeof dataToLoad.currentRewardDay === 'number' ? dataToLoad.currentRewardDay : 1;
+      const savedLastClaimedDate = typeof dataToLoad.lastClaimedDate === 'string' ? dataToLoad.lastClaimedDate : "";
+      
+      if (savedLastClaimedDate && savedLastClaimedDate !== todayStr && savedLastClaimedDate !== yesterdayStr) {
+        // Missed consecutive claims, reset cycle to Day 1
+        savedRewardDay = 1;
       }
+      setCurrentRewardDay(savedRewardDay);
+      setLastClaimedDate(savedLastClaimedDate);
+
       setUnlockedSkins(Array.isArray(dataToLoad.unlockedSkins) ? dataToLoad.unlockedSkins : ["default"]);
       setSelectedSkin(typeof dataToLoad.selectedSkin === 'string' ? dataToLoad.selectedSkin : "default");
     } else {
@@ -304,6 +316,8 @@ export default function Home() {
       setHighScore(0);
       setTotalGames(0);
       setStreakDays(1);
+      setCurrentRewardDay(1);
+      setLastClaimedDate("");
       setUnlockedSkins(["default"]);
       setSelectedSkin("default");
     }
@@ -319,82 +333,16 @@ export default function Home() {
       highScore,
       totalGames,
       streakDays,
+      currentRewardDay,
+      lastClaimedDate,
       unlockedSkins,
       selectedSkin,
       lastLoginDate: new Date().toDateString(),
     };
     localStorage.setItem(storageKey, JSON.stringify(data));
-  }, [stars, highScore, totalGames, streakDays, unlockedSkins, selectedSkin, storageKey, mounted, loadedAddress, currentAddressKey]);
+  }, [stars, highScore, totalGames, streakDays, currentRewardDay, lastClaimedDate, unlockedSkins, selectedSkin, storageKey, mounted, loadedAddress, currentAddressKey]);
 
-  // Find player's record in leaderboard to sync streak and other stats
-  useEffect(() => {
-    if (!address || !leaderboardData.all || leaderboardData.all.length === 0) return;
-    const playerEntry = leaderboardData.all.find(
-      (entry) => entry.address.toLowerCase() === address.toLowerCase()
-    );
-    if (playerEntry) {
-      const dbStreak = playerEntry.streakDays || 1;
-      const dbLastLogin = playerEntry.lastLoginDate;
-      const dbScore = playerEntry.score || playerEntry.allTimeScore || 0;
 
-      const saved = localStorage.getItem(storageKey);
-      let localData: any = null;
-      if (saved) {
-        try {
-          localData = JSON.parse(saved);
-        } catch (_) {}
-      }
-
-      const todayStr = new Date().toDateString();
-      let shouldSync = false;
-      let targetStreak = streakDays;
-      let targetHighScore = highScore;
-
-      if (!localData) {
-        shouldSync = true;
-        targetStreak = dbStreak;
-        targetHighScore = dbScore;
-      } else {
-        const localLastLogin = localData.lastLoginDate;
-        if (dbLastLogin) {
-          const dbDate = new Date(dbLastLogin);
-          const localDate = localLastLogin ? new Date(localLastLogin) : new Date(0);
-          
-          if (dbDate > localDate) {
-            shouldSync = true;
-            targetStreak = dbStreak;
-          } else if (dbDate.toDateString() === localDate.toDateString()) {
-            if (dbStreak > streakDays) {
-              shouldSync = true;
-              targetStreak = dbStreak;
-            }
-          }
-        }
-        if (dbScore > highScore) {
-          shouldSync = true;
-          targetHighScore = dbScore;
-        }
-      }
-
-      if (shouldSync) {
-        setStreakDays(targetStreak);
-        setHighScore(targetHighScore);
-        const currentData = localData || {
-          stars: 50,
-          totalGames: 0,
-          unlockedSkins: ["default"],
-          selectedSkin: "default"
-        };
-        const updatedData = {
-          ...currentData,
-          streakDays: targetStreak,
-          highScore: targetHighScore,
-          lastLoginDate: dbLastLogin || todayStr,
-        };
-        localStorage.setItem(storageKey, JSON.stringify(updatedData));
-      }
-    }
-  }, [address, leaderboardData.all, storageKey]);
 
   const [bubbleText, setBubbleText] = useState("Let's test your reflex! ⚡");
   const [displayedBubbleText, setDisplayedBubbleText] = useState("");
@@ -451,6 +399,79 @@ export default function Home() {
   const [claimStatus, setClaimStatus] = useState<"idle" | "claiming" | "claimed">("idle");
   const [txHash, setTxHash] = useState("");
   const [rewardAmount, setRewardAmount] = useState("0.005");
+
+  const [dailyClaimStatus, setDailyClaimStatus] = useState<"idle" | "claiming" | "claimed">("idle");
+  const dailyRewardRef = useRef<HTMLDivElement>(null);
+  const { reward: dailyRewardAnimation } = useReward(dailyRewardRef, "confetti", {
+    particleCount: 50,
+    spread: 80,
+    startVelocity: 25,
+  });
+
+  const DAILY_REWARDS_LIST = [
+    { day: 1, usdm: 0.0001, stars: 1 },
+    { day: 2, usdm: 0.0002, stars: 2 },
+    { day: 3, usdm: 0.0003, stars: 3 },
+    { day: 4, usdm: 0.0005, stars: 4 },
+    { day: 5, usdm: 0.0007, stars: 5 },
+    { day: 6, usdm: 0.0010, stars: 7 },
+    { day: 7, usdm: 0.0020, stars: 10, special: true },
+  ];
+
+  const handleClaimDailyReward = async () => {
+    const todayStr = new Date().toDateString();
+    if (lastClaimedDate === todayStr) return;
+    if (!address) {
+      alert("Please connect your wallet first!");
+      return;
+    }
+
+    playSound("click");
+    setDailyClaimStatus("claiming");
+
+    const rewardInfo = DAILY_REWARDS_LIST[currentRewardDay - 1];
+
+    try {
+      const response = await fetch("/api/claim", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          recipient: address,
+          amount: rewardInfo.usdm.toFixed(4),
+          type: "daily",
+        }),
+      });
+
+      if (!response.ok) {
+        let errMsg = "Failed to claim daily reward";
+        try {
+          const errData = await response.json();
+          errMsg = errData.error || errData.message || JSON.stringify(errData) || errMsg;
+        } catch (_) {}
+        throw new Error(errMsg);
+      }
+
+      setStars((prev) => prev + rewardInfo.stars);
+      setLastClaimedDate(todayStr);
+
+      const nextDay = currentRewardDay === 7 ? 1 : currentRewardDay + 1;
+      setCurrentRewardDay(nextDay);
+
+      setDailyClaimStatus("claimed");
+      playSound("win");
+      
+      setTimeout(() => {
+        dailyRewardAnimation();
+      }, 100);
+    } catch (err: any) {
+      console.error("Daily claim error:", err);
+      setDailyClaimStatus("idle");
+      playSound("fail");
+      alert(err.message || "Something went wrong while claiming daily rewards!");
+    }
+  };
 
   const rewardRef = useRef<HTMLDivElement>(null);
   const { reward } = useReward(rewardRef, "coins", {
@@ -519,45 +540,7 @@ export default function Home() {
     setActiveScreen(screen);
   };
 
-  const fetchLeaderboard = async () => {
-    try {
-      const res = await fetch("/api/leaderboard");
-      if (res.ok) {
-        const data = await res.json();
-        setLeaderboardData(data);
-      }
-    } catch (e) {
-      console.error("Failed to fetch leaderboard", e);
-    }
-  };
 
-  async function updateLeaderboard(gameScore: number, customStreak?: number) {
-    try {
-      await fetch("/api/leaderboard", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          address: address || "guest",
-          score: gameScore,
-          streakDays: customStreak !== undefined ? customStreak : streakDays,
-        }),
-      });
-    } catch (error) {
-      console.error("Failed to update leaderboard:", error);
-    }
-  }
-
-  useEffect(() => {
-    fetchLeaderboard();
-  }, [address]);
-
-  useEffect(() => {
-    if (activeScreen === "leaderboard") {
-      fetchLeaderboard();
-    }
-  }, [activeScreen]);
 
   const randomizeMascot = () => {
     playSound("click");
@@ -877,8 +860,6 @@ export default function Home() {
     setTotalGames((prev) => prev + 1);
     setHighScore((prev) => (finalScore > prev ? finalScore : prev));
 
-    // Post to leaderboard API
-    updateLeaderboard(finalScore);
 
     // Calculate stars reward matching the UI (+15 for score 5-7, +30 for score >= 8)
     const rewardStars = finalScore >= 5 ? (finalScore >= 8 ? 30 : 15) : 0;
@@ -1043,11 +1024,11 @@ export default function Home() {
                 >
                   🧸 Shop
                 </Button>
-                <Button
-                  onClick={() => changeScreen("leaderboard")}
+                 <Button
+                  onClick={() => changeScreen("daily-rewards")}
                   className="w-full py-5 font-bold bg-[#675f2d] hover:bg-[#4f4717] text-white rounded-2xl clay-button-primary"
                 >
-                  🏆 Leaderboard
+                  🎁 Daily Rewards
                 </Button>
               </div>
 
@@ -1504,83 +1485,96 @@ export default function Home() {
           </div>
         )}
 
-        {/* LEADERBOARD SCREEN */}
-        {activeScreen === "leaderboard" && (
-          <div className="w-full bg-white p-6 rounded-3xl clay-card">
-            <h2 className="text-2xl font-bold text-[#81515a] mb-6">Daily Leaders 🏆</h2>
+        {/* DAILY REWARDS SCREEN */}
+        {activeScreen === "daily-rewards" && (
+          <div className="w-full bg-white p-6 rounded-3xl clay-card relative">
+            {/* Confetti container */}
+            <div ref={dailyRewardRef} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 overflow-visible z-50" />
+            
+            <h2 className="text-2xl font-bold text-[#81515a] mb-2 text-center">Daily Rewards 🎁</h2>
+            <p className="text-xs text-slate-500 mb-6 text-center max-w-[280px] mx-auto">
+              Claim USDm and Stars every day! Keep your streak to unlock the Day 7 Chest!
+            </p>
 
-            {/* Toggle Button Group */}
-            <div className="flex bg-[#fff8f7] p-1.5 rounded-xl border-2 border-white mb-6 shadow-[inset_0_4px_8px_rgba(0,0,0,0.03)]">
-              <button
-                onClick={() => setLeaderboardTab("daily")}
-                className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${
-                  leaderboardTab === "daily"
-                    ? "bg-[#81515a] text-white shadow-md"
-                    : "text-[#81515a]/75 hover:bg-[#81515a]/5"
-                }`}
-              >
-                Today's Daily ⏱️
-              </button>
-              <button
-                onClick={() => setLeaderboardTab("all")}
-                className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${
-                  leaderboardTab === "all"
-                    ? "bg-[#81515a] text-white shadow-md"
-                    : "text-[#81515a]/75 hover:bg-[#81515a]/5"
-                }`}
-              >
-                All-Time 👑
-              </button>
+            <div className="grid grid-cols-4 gap-2 mb-6">
+              {DAILY_REWARDS_LIST.map((rewardItem) => {
+                const todayStr = new Date().toDateString();
+                const isClaimedToday = lastClaimedDate === todayStr;
+                
+                let status: "claimed" | "active" | "locked" = "locked";
+                if (rewardItem.day < currentRewardDay) {
+                  status = "claimed";
+                } else if (rewardItem.day === currentRewardDay) {
+                  status = isClaimedToday ? "claimed" : "active";
+                }
+
+                return (
+                  <div
+                    key={rewardItem.day}
+                    className={`p-2.5 rounded-2xl border-2 flex flex-col items-center justify-between text-center transition-all ${
+                      rewardItem.day === 7 ? "col-span-2" : ""
+                    } ${
+                      status === "claimed"
+                        ? "border-slate-200 bg-slate-50 opacity-60"
+                        : status === "active"
+                        ? "border-[#ffd9df] bg-[#fff8f7] scale-105 shadow-sm font-bold animate-pulse-slow"
+                        : "border-slate-100 bg-white opacity-40"
+                    }`}
+                  >
+                    <span className="text-[10px] font-bold text-[#81515a]/70">Day {rewardItem.day}</span>
+                    <span className="text-2xl my-1 drop-shadow-sm">
+                      {rewardItem.day === 7 ? "🎁" : "⭐"}
+                    </span>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[10px] text-slate-500 font-semibold">{rewardItem.usdm} USDm</span>
+                      <span className="text-[9px] font-bold text-[#81515a]">+{rewardItem.stars} Stars</span>
+                    </div>
+                    <span className="text-[9px] font-bold mt-1.5 uppercase tracking-wide">
+                      {status === "claimed" ? "Claimed ✔️" : status === "active" ? "Active" : "Locked 🔒"}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
 
-            <div className="flex flex-col gap-2.5 mb-6">
-              {(!leaderboardData.daily || !leaderboardData.all) ? (
-                <div className="text-center py-8 text-slate-400 text-sm">
-                  Loading leaderboard... 🏆
+            {/* CTA Claim Button */}
+            {(() => {
+              const todayStr = new Date().toDateString();
+              const isClaimedToday = lastClaimedDate === todayStr;
+
+              return (
+                <div className="w-full flex flex-col gap-3">
+                  <Button
+                    onClick={handleClaimDailyReward}
+                    disabled={isClaimedToday || dailyClaimStatus === "claiming" || !isConnected}
+                    className={`w-full py-5 text-lg font-bold rounded-2xl transition-all duration-300 ${
+                      isClaimedToday
+                        ? "bg-slate-100 text-slate-400 border border-slate-200"
+                        : dailyClaimStatus === "claiming"
+                        ? "bg-slate-200 text-slate-400 cursor-wait"
+                        : !isConnected
+                        ? "bg-slate-200 text-slate-500 border border-slate-300 cursor-not-allowed"
+                        : "bg-[#81515a] hover:bg-[#663a43] text-white clay-button-primary"
+                    }`}
+                  >
+                    {!isConnected
+                      ? "Connect Wallet to Claim"
+                      : isClaimedToday
+                      ? "Come back tomorrow"
+                      : dailyClaimStatus === "claiming"
+                      ? "Claiming..."
+                      : `Claim Day ${currentRewardDay} Reward!`}
+                  </Button>
+
+                  <Button
+                    onClick={() => changeScreen("home")}
+                    className="w-full py-4 font-bold bg-[#e2d8d8] text-[#514345] hover:bg-[#eae0e0] rounded-2xl clay-card"
+                  >
+                    Back to Menu
+                  </Button>
                 </div>
-              ) : (
-                (() => {
-                  const activeList = leaderboardTab === "daily" ? leaderboardData.daily : leaderboardData.all;
-                  if (activeList.length === 0) {
-                    return (
-                      <div className="text-center py-8 text-slate-400 text-sm">
-                        {leaderboardTab === "daily"
-                          ? "No daily records today. Be the first! ⏱️"
-                          : "No records yet. Play a game! 👑"}
-                      </div>
-                    );
-                  }
-                  return activeList.map((user: any, idx: number) => {
-                    const isUser = user.address === (address || "guest");
-                    return (
-                      <div
-                        key={idx}
-                        className={`p-3 rounded-2xl flex justify-between items-center text-sm border transition-all ${
-                          isUser
-                            ? "bg-[#ffd9df] border-[#ffc0cb] font-bold scale-[1.02] shadow-sm"
-                            : "bg-slate-50 border-slate-100 text-slate-700"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="font-bold text-[#81515a] w-5">#{idx + 1}</span>
-                          <span className={`font-semibold font-mono ${isUser ? "text-[#81515a]" : "text-slate-700"}`}>
-                            {user.name} {isUser && <span className="text-xs font-bold text-[#81515a]"> (You)</span>}
-                          </span>
-                        </div>
-                        <span className="font-bold text-[#81515a]">{user.score} pts</span>
-                      </div>
-                    );
-                  });
-                })()
-              )}
-            </div>
-
-            <Button
-              onClick={() => changeScreen("home")}
-              className="w-full py-4 font-bold bg-[#81515a] text-white rounded-2xl clay-button-primary"
-            >
-              Back to Menu
-            </Button>
+              );
+            })()}
           </div>
         )}
 
