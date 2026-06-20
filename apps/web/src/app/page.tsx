@@ -402,7 +402,7 @@ export default function Home() {
 
   const [dailyClaimStatus, setDailyClaimStatus] = useState<"idle" | "claiming" | "claimed">("idle");
   const dailyRewardRef = useRef<HTMLDivElement>(null);
-  const { reward: dailyRewardAnimation } = useReward(dailyRewardRef, "confetti", {
+  const { reward: dailyRewardAnimation } = useReward(dailyRewardRef as any, "confetti", {
     particleCount: 50,
     spread: 80,
     startVelocity: 25,
@@ -474,7 +474,7 @@ export default function Home() {
   };
 
   const rewardRef = useRef<HTMLDivElement>(null);
-  const { reward } = useReward(rewardRef, "coins", {
+  const { reward } = useReward(rewardRef as any, "coins", {
     particleCount: 25,
     spread: 60,
     startVelocity: 20,
