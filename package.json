@@ -9,7 +9,10 @@
     "start": "pnpm --filter web start",
     "lint": "pnpm --filter web lint",
     "clean": "pnpm --filter web clean",
-    "type-check": "pnpm --filter web type-check"
+    "type-check": "pnpm --filter web type-check",
+    "video:dev": "pnpm --filter preview-video dev",
+    "video:build": "pnpm --filter preview-video build",
+    "video:render": "pnpm --filter preview-video render"
   },
   "devDependencies": {
     "@types/node": "^20.8.0",
