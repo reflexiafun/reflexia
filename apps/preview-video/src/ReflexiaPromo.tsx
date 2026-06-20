@@ -131,11 +131,13 @@ const Scene: React.FC<{
 export const ReflexiaPromo: React.FC = () => {
   return (
     <AbsoluteFill className="bg-slate-900 font-sans">
-      {/* Persistent Background Music */}
-      <Audio src={staticFile("backsound.mp3")} volume={0.12} loop />
+      {/* Persistent Background Music (only during the active promotion slides) */}
+      <Sequence durationInFrames={1000}>
+        <Audio src={staticFile("backsound.mp3")} volume={0.12} loop />
+      </Sequence>
 
       {/* Slide 1: Intro (0s - 5s / 150 frames) */}
-      <Sequence from={0} durationInFrames={150}>
+      <Sequence durationInFrames={150}>
         <Audio src={staticFile("speech-1.mp3")} volume={1} />
         <Scene bgGradient="from-pink-200 via-purple-100 to-blue-200" duration={150}>
           <FloatingEmoji emoji="⭐" delay={10} initialX={18} initialY={22} scale={1.3} />
@@ -244,6 +246,11 @@ export const ReflexiaPromo: React.FC = () => {
             </div>
           </div>
         </Scene>
+      </Sequence>
+
+      {/* Slide 6: Blank Black Scene (33.33s - 61s / 830 frames) to extend duration past 60s */}
+      <Sequence from={1000} durationInFrames={830}>
+        <AbsoluteFill className="bg-black" />
       </Sequence>
     </AbsoluteFill>
   );
