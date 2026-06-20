@@ -248,8 +248,8 @@ export const ReflexiaPromo: React.FC = () => {
         </Scene>
       </Sequence>
 
-      {/* Slide 6: Blank Black Scene (33.33s - 61s / 830 frames) to extend duration past 60s */}
-      <Sequence from={1000} durationInFrames={830}>
+      {/* Slide 6: Blank Black Scene (33.33s - 185s / 4550 frames) to extend duration past 3 minutes (Shorts limit) */}
+      <Sequence from={1000} durationInFrames={4550}>
         <AbsoluteFill className="bg-black" />
       </Sequence>
     </AbsoluteFill>
