@@ -1505,8 +1505,9 @@ export default function Home() {
                 if (rewardItem.day < currentRewardDay) {
                   status = "claimed";
                 } else if (rewardItem.day === currentRewardDay) {
-                  status = isClaimedToday ? "claimed" : "active";
+                  status = isClaimedToday ? "locked" : "active";
                 }
+
 
                 return (
                   <div
