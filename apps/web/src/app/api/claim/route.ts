@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     }
 
     if (type === 'daily') {
-      const validDailyAmounts = [0.0001, 0.0002, 0.0003, 0.0005, 0.0007, 0.0010, 0.0020]
+      const validDailyAmounts = [0.01, 0.02, 0.03, 0.05, 0.07, 0.10, 0.20]
       const isValidAmount = validDailyAmounts.some(val => Math.abs(val - numAmount) < 0.00001)
       if (!isValidAmount) {
         return NextResponse.json({ error: 'Invalid daily reward amount' }, { status: 400 })

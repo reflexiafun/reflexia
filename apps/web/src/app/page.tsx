@@ -409,13 +409,13 @@ export default function Home() {
   });
 
   const DAILY_REWARDS_LIST = [
-    { day: 1, usdm: 0.0001, stars: 1 },
-    { day: 2, usdm: 0.0002, stars: 2 },
-    { day: 3, usdm: 0.0003, stars: 3 },
-    { day: 4, usdm: 0.0005, stars: 4 },
-    { day: 5, usdm: 0.0007, stars: 5 },
-    { day: 6, usdm: 0.0010, stars: 7 },
-    { day: 7, usdm: 0.0020, stars: 10, special: true },
+    { day: 1, usdm: 0.0100, stars: 1 },
+    { day: 2, usdm: 0.0200, stars: 2 },
+    { day: 3, usdm: 0.0300, stars: 3 },
+    { day: 4, usdm: 0.0500, stars: 4 },
+    { day: 5, usdm: 0.0700, stars: 5 },
+    { day: 6, usdm: 0.1000, stars: 7 },
+    { day: 7, usdm: 0.2000, stars: 10, special: true },
   ];
 
   const handleClaimDailyReward = async () => {
