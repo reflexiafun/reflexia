@@ -1084,7 +1084,7 @@ export default function Home() {
         {/* SPIN SCREEN */}
         {activeScreen === "spin" && (
           <div className="w-full bg-white p-6 rounded-3xl clay-card flex flex-col items-center text-center">
-            <h2 className="text-2xl font-bold text-[#81515a] mb-2">Lucky Box Spin! 🎁</h2>
+            <h2 className="text-2xl font-bold text-[#81515a] mb-2">Forbidden Emoji Spin! 🚫</h2>
             <p className="text-xs text-slate-500 mb-6 max-w-[280px]">
               {isSpinning
                 ? "Spinning the boxes to reveal 3 forbidden emojis..."
