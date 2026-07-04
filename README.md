@@ -4,7 +4,7 @@ Reflexia is a fast-paced reflex mini-game built on Celo stablecoin rails, design
 
 > **Reflexia is a fast-paced casual game built specifically for MiniPay on Celo stablecoin rails, delivering instant micro-rewards in USDm directly to players' Celo wallets. By focusing on pure gameplay and high-retention tapping challenges, it offers a secure and abuse-resistant rewards loop free from complex DeFi mechanisms. Winners can seamlessly swap their USDm rewards to USDT or USDC via MiniPay Pockets, providing a friction-free Web3 user experience tailored for casual mobile audiences.**
 
-[![Reflexia Gameplay Preview](https://img.youtube.com/vi/h7sOAna20lw/maxresdefault.jpg)](https://youtu.be/h7sOAna20lw)
+[![Reflexia Gameplay Preview](https://img.youtube.com/vi/Yd4x1hMxqZM/maxresdefault.jpg)](https://youtu.be/Yd4x1hMxqZM?si=apWkLqC__Vbl76o6)
 
 ---
 
